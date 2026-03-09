@@ -15,6 +15,6 @@ A dual-language AGENTS governance workspace that combines:
 
 ## Start Here
 
-- Chinese workspace: [AAAAAAGENTS.MD.CN/WORKSPACE.md](./AAAAAAGENTS.MD.CN/WORKSPACE.md)
-- English workspace: [AAAAAAGENTS.MD.EN/WORKSPACE.md](./AAAAAAGENTS.MD.EN/WORKSPACE.md)
+- Chinese workspace root: [AAAAAAGENTS.MD.CN](./AAAAAAGENTS.MD.CN/)
+- English workspace root: [AAAAAAGENTS.MD.EN](./AAAAAAGENTS.MD.EN/)
 - Contribution guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
