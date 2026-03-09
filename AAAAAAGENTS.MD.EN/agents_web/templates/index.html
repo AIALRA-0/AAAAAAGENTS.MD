@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AGENTS Visual Workbench</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/app.css?v={{ asset_version }}" rel="stylesheet">
+</head>
+<body>
+  <main class="app-shell container-fluid">
+    <header class="top-toolbar">
+      <div>
+        <h1>AGENTS Visual Workbench</h1>
+        <p>Default preview mode, click on the flowchart node to directly view the structured details</p>
+      </div>
+      <div class="toolbar-actions">
+        <button id="sync-tree-btn" type="button" class="btn btn-light">Sync TREE</button>
+        <button id="verify-btn" type="button" class="btn btn-light">Final inspection</button>
+        <button id="baseline-btn" type="button" class="btn btn-outline-light">Synchronize final baseline</button>
+      </div>
+    </header>
+    <section class="main-grid">
+      <aside class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Document navigation</h2>
+          <span id="doc-count" class="status-pill">0 documents</span>
+        </div>
+        <div class="panel-body doc-tree-wrap" id="nav-tree"></div>
+      </aside>
+      <section class="workspace">
+        <div class="status-line">
+          <span id="doc-state-pill" class="status-pill">Document not loaded</span>
+          <span id="runtime-status" class="status-pill">System ready</span>
+        </div>
+        <article id="graph-panel" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">Flowchart preview</h2>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <button id="graph-mode-graph-btn" type="button" class="btn btn-sm btn-outline-primary active">Graph mode</button>
+              <button id="graph-mode-list-btn" type="button" class="btn btn-sm btn-outline-primary">List mode</button>
+              <button id="graph-save-layout-btn" type="button" class="btn btn-sm btn-outline-primary">Save layout</button>
+              <button id="graph-fit-btn" type="button" class="btn btn-sm btn-outline-primary">Reset view</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="graph-view-wrap" class="visual-grid">
+              <div class="canvas-wrap"><div id="graph-canvas"></div></div>
+              <aside id="graph-detail" class="detail-wrap"></aside>
+            </div>
+            <div id="graph-list-wrap" class="hidden">
+              <div class="list-detail-grid">
+                <div id="graph-list" class="node-list"></div>
+                <aside id="graph-list-detail" class="detail-wrap"></aside>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article id="tree-panel" class="panel hidden">
+          <div class="panel-head"><h2 class="panel-title">TREE structure browsing</h2></div>
+          <div class="panel-body"><div class="tree-grid"><div id="tree-explorer" class="tree-explorer"></div><aside id="tree-detail" class="tree-detail"></aside></div></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="doc-title" class="panel-title">Document preview</h2>
+              <div id="doc-meta" class="doc-meta"></div>
+            </div>
+            <div class="edit-actions">
+              <button id="toggle-mode-btn" type="button" class="btn btn-outline-primary">Enter editing</button>
+            </div>
+          </div>
+          <div class="panel-body"><article id="doc-html" class="preview-wrap"></article></div>
+        </article>
+        <article id="edit-panel" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">Edit mode</h2>
+            <div class="edit-actions">
+              <button id="save-raw-btn" type="button" class="btn btn-primary">Save original text</button>
+              <button id="save-node-btn" type="button" class="btn btn-primary">Save node</button>
+              <button id="reset-btn" type="button" class="btn btn-outline-danger">Reset document</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+              <li class="nav-item"><button id="tab-raw-btn" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-raw" type="button">Original editing</button></li>
+              <li id="tab-node-item" class="nav-item"><button id="tab-node-btn" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-node" type="button">Node editing</button></li>
+            </ul>
+            <div class="tab-content edit-zone">
+              <div class="tab-pane fade show active" id="tab-raw"><textarea id="raw-editor" spellcheck="false"></textarea></div>
+              <div class="tab-pane fade" id="tab-node">
+                <div class="node-toolbar">
+                  <div class="text-muted small">Node list</div>
+                  <div id="milestone-node-actions" class="d-flex gap-2 hidden">
+                    <button id="node-create-btn" type="button" class="btn btn-outline-primary btn-sm">New node</button>
+                    <button id="node-delete-btn" type="button" class="btn btn-outline-danger btn-sm">Delete node</button>
+                  </div>
+                </div>
+                <div id="node-list" class="node-list"></div>
+                <form id="node-form" class="node-form"></form>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal fade" id="action-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="action-modal-title" class="modal-title">Action confirmation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="action-modal-body" class="mb-2"></p>
+          <input id="action-modal-input" type="text" class="form-control hidden" />
+        </div>
+        <div class="modal-footer">
+          <button id="action-modal-cancel" type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
+          <button id="action-modal-confirm" type="button" class="btn btn-primary">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="verify-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Final inspection details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="verify-modal-summary" class="mb-3"></div>
+          <div class="mb-3">
+            <h6 class="small text-muted">Error list</h6>
+            <ul id="verify-modal-errors" class="mb-0"></ul>
+          </div>
+          <div>
+            <h6 class="small text-muted">Repair suggestions</h6>
+            <ul id="verify-modal-hints" class="mb-0"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-region" class="toast-container"></div>
+
+  <script>
+    window.__INITIAL_TREE__ = {{ docs_tree | tojson }};
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <script defer src="/static/app.js?v={{ asset_version }}"></script>
+</body>
+</html>
+

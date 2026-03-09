@@ -1,6 +1,6 @@
 # Screenshot Capture Guide
 
-This folder stores screenshot assets referenced by `README.md`.
+This folder stores screenshot assets referenced by `../../README.md`.
 
 ## Expected Files
 
@@ -48,4 +48,4 @@ These files are placeholders by contract at bootstrap stage and are not generate
 2. Export as PNG.
 3. Rename to the exact expected filename.
 4. Put it in this folder.
-5. Reopen `README.md` and verify all screenshot links.
+5. Reopen `../../README.md` and verify all screenshot links.
