@@ -1,0 +1,885 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+BASELINE_PATH = ROOT / "agents_artifacts" / "outputs" / "baseline.json"
+FINALIZE_STATE_PATH = ROOT / "agents_artifacts" / "outputs" / "finalize_state.json"
+
+READ_ONLY_FILES = [
+    "AGENTS.md",
+    "BACKGROUND.md",
+    "agents_standards/PYTHON_STANDARD.md",
+    "agents_standards/MARKDOWN_STANDARD.md",
+]
+EDITABLE_FILES = ["MILESTONE.md", "CHANGE.md", "TREE.md"]
+MILESTONE_STATUSES = {"archived", "unfinished", "done", "deleted"}
+SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+DOC_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+DATA_BLOCK_RE = re.compile(r"##\s*DATA.*?```(?:yaml|yml|json)\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
+TREE_TEXT_RE = re.compile(r"##\s*TREE_TEXT.*?```text\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
+TIME_FMT = "%Y-%m-%d-%H-%M"
+TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$")
+
+TREE_NOTE_FORBIDDEN_HINTS = [
+    "文件节点",
+    "目录节点",
+    "最后修改时间",
+    "最后扫描时间",
+    "状态正常",
+    "只读",
+    "可编辑",
+]
+
+IGNORED_HASH_DIRS = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".venv", ".venv-win", ".venv-linux", "venv", "node_modules"}
+IGNORED_HASH_PREFIXES = {
+    "agents_artifacts/",
+    "agents_web/__pycache__/",
+    "agents_tools/__pycache__/",
+}
+IGNORED_HASH_FILES = {
+    "agents_artifacts/outputs/baseline.json",
+    "agents_artifacts/outputs/finalize_state.json",
+    "agents_artifacts/outputs/tree_state.json",
+}
+
+
+@dataclass
+class Report:
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    fixes: list[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+
+    def add_error(self, message: str) -> None:
+        self.errors.append(message)
+
+    def add_warning(self, message: str) -> None:
+        self.warnings.append(message)
+
+    def add_fix(self, message: str) -> None:
+        self.fixes.append(message)
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = {
+            "status": "ok" if not self.errors else "failed",
+            "error_count": len(self.errors),
+            "warning_count": len(self.warnings),
+            "fix_count": len(self.fixes),
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "fixes": self.fixes,
+        }
+        if self.details:
+            payload["details"] = self.details
+        return payload
+
+
+def normalize_text(text: str) -> str:
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def now_stamp() -> str:
+    return datetime.now().strftime(TIME_FMT)
+
+
+def normalize_stamp(value: Any) -> str:
+    raw = str(value or "").strip()
+    if TIME_RE.fullmatch(raw):
+        return raw
+    if raw:
+        candidates = [raw, raw.replace("T", " ")]
+        for cand in candidates:
+            for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
+                try:
+                    return datetime.strptime(cand, fmt).strftime(TIME_FMT)
+                except ValueError:
+                    continue
+    return now_stamp()
+
+
+def sha256_text(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def read_text(path: Path) -> str:
+    return normalize_text(path.read_text(encoding="utf-8"))
+
+
+def write_text(path: Path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
+
+
+def to_rel(path: Path) -> str:
+    return path.relative_to(ROOT).as_posix()
+
+
+def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
+    match = DOC_FRONTMATTER_RE.search(text)
+    if not match:
+        raise ValueError("缺少 frontmatter 头部")
+    raw = match.group(1).strip()
+    parsed: dict[str, str] = {}
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if ":" not in line:
+            raise ValueError(f"frontmatter 行格式错误: {line}")
+        key, value = line.split(":", 1)
+        parsed[key.strip()] = value.strip()
+    body = text[match.end() :]
+    return parsed, body
+
+
+def parse_data_payload(text: str) -> dict[str, Any]:
+    match = DATA_BLOCK_RE.search(text)
+    if not match:
+        raise ValueError("缺少 DATA 代码块")
+    block = match.group(1).strip()
+    try:
+        payload = json.loads(block)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"DATA 内容不是合法 JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("DATA 顶层必须是对象")
+    return payload
+
+
+def extract_tree_text(text: str) -> str:
+    match = TREE_TEXT_RE.search(text)
+    if not match:
+        raise ValueError("缺少 TREE_TEXT 代码块")
+    return normalize_text(match.group(1).strip())
+
+
+def render_doc(path_name: str, last_updated: str, payload: dict[str, Any]) -> str:
+    if path_name == "MILESTONE.md":
+        return (
+            "---\n"
+            f"last_updated: {last_updated}\n"
+            "---\n\n"
+            "# MILESTONE\n\n"
+            "## DATA\n"
+            "```yaml\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
+            "```\n"
+        )
+    if path_name == "CHANGE.md":
+        return (
+            "---\n"
+            f"last_updated: {last_updated}\n"
+            "---\n\n"
+            "# CHANGE\n\n"
+            "## DATA\n"
+            "```yaml\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
+            "```\n"
+        )
+    raise ValueError(f"render_doc 不支持文档: {path_name}")
+
+
+def load_tree_module():
+    tree_path = ROOT / "agents_tools" / "tree.py"
+    spec = importlib.util.spec_from_file_location("agents_tree_tool", tree_path)
+    if not spec or not spec.loader:
+        raise RuntimeError("无法加载 agents_tools/tree.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def is_ignored_hash_path(rel: str) -> bool:
+    if rel in IGNORED_HASH_FILES:
+        return True
+    if any(rel.startswith(prefix) for prefix in IGNORED_HASH_PREFIXES):
+        return True
+    parts = rel.split("/")
+    return any(part in IGNORED_HASH_DIRS for part in parts)
+
+
+def list_hashable_files() -> list[Path]:
+    files: list[Path] = []
+    for root, dirs, names in os.walk(ROOT):
+        root_path = Path(root)
+        dirs[:] = sorted([d for d in dirs if d not in IGNORED_HASH_DIRS], key=str.lower)
+        names = sorted(names, key=str.lower)
+        for name in names:
+            file_path = root_path / name
+            rel = file_path.relative_to(ROOT).as_posix()
+            if is_ignored_hash_path(rel):
+                continue
+            files.append(file_path)
+    return sorted(files, key=lambda p: p.relative_to(ROOT).as_posix().lower())
+
+
+def compute_file_hashes() -> dict[str, str]:
+    hashes: dict[str, str] = {}
+    for file_path in list_hashable_files():
+        rel = to_rel(file_path)
+        hashes[rel] = sha256_text(read_text(file_path))
+    return hashes
+
+
+def compute_changed_files(previous: dict[str, str], current: dict[str, str]) -> list[str]:
+    changed: list[str] = []
+    all_paths = set(previous) | set(current)
+    for rel in sorted(all_paths):
+        if previous.get(rel) != current.get(rel):
+            changed.append(rel)
+    return changed
+
+
+def ensure_iso_date(value: str) -> bool:
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def ensure_minute_timestamp(value: str) -> bool:
+    return TIME_RE.fullmatch(str(value or "").strip()) is not None
+
+
+def parse_semver(value: str) -> tuple[int, int, int] | None:
+    if not SEMVER_RE.fullmatch(value):
+        return None
+    major, minor, patch = value.split(".")
+    return (int(major), int(minor), int(patch))
+
+
+def load_json_file(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if isinstance(data, dict):
+        return data
+    return None
+
+
+def progress_checks_disabled(state: dict[str, Any] | None) -> bool:
+    if not isinstance(state, dict):
+        return False
+    return bool(state.get("skip_progress_checks_once"))
+
+
+def load_docs(report: Report) -> dict[str, dict[str, Any]]:
+    docs: dict[str, dict[str, Any]] = {}
+    for rel in EDITABLE_FILES:
+        path = ROOT / rel
+        if not path.exists():
+            report.add_error(f"缺少必需文件: {rel}")
+            continue
+        text = read_text(path)
+        try:
+            frontmatter, body = parse_frontmatter(text)
+            payload = parse_data_payload(text)
+        except ValueError as exc:
+            report.add_error(f"{rel}: {exc}")
+            continue
+        docs[rel] = {"path": path, "text": text, "frontmatter": frontmatter, "body": body, "payload": payload}
+    return docs
+
+
+def update_change_impacted_files(
+    change_payload: dict[str, Any],
+    previous_hashes: dict[str, str],
+    current_hashes: dict[str, str],
+    report: Report,
+) -> bool:
+    changes = change_payload.get("changes")
+    if not isinstance(changes, list) or not changes:
+        report.add_error("CHANGE.md: changes 必须是非空列表")
+        return False
+    latest = changes[-1]
+    if not isinstance(latest, dict):
+        report.add_error("CHANGE.md: 最新记录必须是对象")
+        return False
+    changed_files = compute_changed_files(previous_hashes, current_hashes)
+    if latest.get("impacted_files") != changed_files:
+        latest["impacted_files"] = changed_files
+        report.add_fix("CHANGE.md 已自动更新最新记录的 impacted_files")
+        return True
+    return False
+
+
+def migrate_change_dates(change_payload: dict[str, Any], report: Report) -> bool:
+    changes = change_payload.get("changes")
+    if not isinstance(changes, list):
+        return False
+    changed = False
+    for idx, entry in enumerate(changes):
+        if not isinstance(entry, dict):
+            continue
+        raw = str(entry.get("date", "")).strip()
+        if not raw:
+            continue
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
+            entry["date"] = f"{raw}-00-00"
+            changed = True
+            report.add_fix(f"CHANGE[{idx}] date 已自动迁移到分钟格式")
+            continue
+        normalized = normalize_stamp(raw)
+        if normalized != raw:
+            entry["date"] = normalized
+            changed = True
+            report.add_fix(f"CHANGE[{idx}] date 已规范化为 {normalized}")
+    return changed
+
+
+def update_milestone_updated_at(
+    milestone_payload: dict[str, Any],
+    previous_statuses: dict[str, str] | None,
+    now_value: str,
+) -> bool:
+    if previous_statuses is None:
+        return False
+    milestones = milestone_payload.get("milestones")
+    if not isinstance(milestones, list):
+        return False
+    changed = []
+    for node in milestones:
+        if not isinstance(node, dict):
+            continue
+        node_id = str(node.get("id", ""))
+        if not node_id or node_id not in previous_statuses:
+            continue
+        if str(node.get("status")) != previous_statuses[node_id]:
+            changed.append(node)
+    if len(changed) != 1:
+        return False
+    one = changed[0]
+    node_id = str(one.get("id"))
+    if previous_statuses.get(node_id) == "unfinished" and str(one.get("status")) == "done":
+        if str(one.get("updated_at", "")) != now_value:
+            one["updated_at"] = now_value
+            return True
+    return False
+
+
+def ensure_frontmatter_for_editable(name: str, frontmatter: dict[str, str], report: Report) -> None:
+    keys = set(frontmatter.keys())
+    if keys != {"last_updated"}:
+        report.add_error(f"{name}: frontmatter 只能包含 last_updated")
+        return
+    if not ensure_minute_timestamp(str(frontmatter.get("last_updated", ""))):
+        report.add_error(f"{name}: last_updated 必须是 YYYY-MM-DD-HH-MM")
+
+
+def milestone_signature(node: dict[str, Any]) -> dict[str, Any]:
+    keep = {
+        "id": node.get("id"),
+        "title": node.get("title"),
+        "prerequisites": node.get("prerequisites"),
+        "postnodes": node.get("postnodes"),
+        "why": node.get("why"),
+        "what": node.get("what"),
+        "how": node.get("how"),
+        "verify": node.get("verify"),
+        "ddl": node.get("ddl"),
+        "notes": node.get("notes"),
+    }
+    return keep
+
+
+def validate_milestone(
+    payload: dict[str, Any],
+    baseline: dict[str, Any] | None,
+    state: dict[str, Any] | None,
+    report: Report,
+) -> None:
+    milestones = payload.get("milestones")
+    if not isinstance(milestones, list) or not milestones:
+        report.add_error("MILESTONE.md: milestones 必须是非空列表")
+        return
+
+    required = {
+        "id",
+        "title",
+        "prerequisites",
+        "postnodes",
+        "why",
+        "what",
+        "how",
+        "verify",
+        "ddl",
+        "status",
+        "notes",
+        "updated_at",
+    }
+    seen_ids: set[str] = set()
+    by_id: dict[str, dict[str, Any]] = {}
+    for idx, node in enumerate(milestones):
+        ctx = f"MILESTONE[{idx}]"
+        if not isinstance(node, dict):
+            report.add_error(f"{ctx}: 节点必须是对象")
+            continue
+        keys = set(node.keys())
+        if keys != required:
+            missing = sorted(required - keys)
+            extra = sorted(keys - required)
+            if missing:
+                report.add_error(f"{ctx}: 缺少字段 {', '.join(missing)}")
+            if extra:
+                report.add_error(f"{ctx}: 存在多余字段 {', '.join(extra)}")
+            continue
+        node_id = str(node.get("id", "")).strip()
+        if not node_id:
+            report.add_error(f"{ctx}: id 不能为空")
+            continue
+        if node_id in seen_ids:
+            report.add_error(f"{ctx}: id 重复 {node_id}")
+            continue
+        seen_ids.add(node_id)
+        by_id[node_id] = node
+
+        if not str(node.get("title", "")).strip():
+            report.add_error(f"{ctx}: title 不能为空")
+        if str(node.get("status")) not in MILESTONE_STATUSES:
+            report.add_error(f"{ctx}: status 非法 {node.get('status')}")
+        if not ensure_iso_date(str(node.get("ddl", ""))):
+            report.add_error(f"{ctx}: ddl 必须是 YYYY-MM-DD")
+        if not ensure_minute_timestamp(str(node.get("updated_at", ""))):
+            report.add_error(f"{ctx}: updated_at 必须是 YYYY-MM-DD-HH-MM")
+
+        for list_key in ["prerequisites", "postnodes", "why", "what", "how", "verify", "notes"]:
+            value = node.get(list_key)
+            if not isinstance(value, list):
+                report.add_error(f"{ctx}: {list_key} 必须是列表")
+                continue
+            if list_key in {"why", "what", "how", "verify"} and len(value) == 0:
+                report.add_error(f"{ctx}: {list_key} 必须是非空列表")
+            if any(not str(item).strip() for item in value):
+                report.add_error(f"{ctx}: {list_key} 存在空条目")
+
+    for node_id, node in by_id.items():
+        if str(node.get("status")) != "done":
+            continue
+        prerequisites = node.get("prerequisites", [])
+        if not isinstance(prerequisites, list):
+            continue
+        for pre_id in prerequisites:
+            pre = by_id.get(str(pre_id))
+            if not pre:
+                report.add_error(f"MILESTONE[{node_id}]: 前置节点不存在 {pre_id}")
+                continue
+            pre_status = str(pre.get("status"))
+            if pre_status in {"archived", "deleted"}:
+                continue
+            if pre_status != "done":
+                report.add_error(f"MILESTONE[{node_id}]: 前置节点未完成 {pre_id}")
+
+    baseline_structure = (baseline or {}).get("milestone_structure")
+    if isinstance(baseline_structure, dict):
+        baseline_ids = baseline_structure.get("ids")
+        if isinstance(baseline_ids, list):
+            now_ids = [str(node.get("id")) for node in milestones if isinstance(node, dict)]
+            if sorted(now_ids) != sorted([str(i) for i in baseline_ids]):
+                report.add_error("MILESTONE.md: 检测到节点新增或删除，请先执行 baseline_refresh")
+        baseline_sig = baseline_structure.get("signature_by_id")
+        if isinstance(baseline_sig, dict):
+            for node in milestones:
+                if not isinstance(node, dict):
+                    continue
+                node_id = str(node.get("id"))
+                if node_id in baseline_sig:
+                    if milestone_signature(node) != baseline_sig[node_id]:
+                        report.add_error(f"MILESTONE[{node_id}]: 检测到非状态字段结构变更")
+
+    if progress_checks_disabled(state):
+        report.add_warning("MILESTONE.md: 已检测到基线同步，本次跳过里程碑进度差异校验")
+        return
+
+    previous_statuses = None
+    if isinstance(state, dict):
+        previous_statuses = state.get("milestone_statuses")
+    if isinstance(previous_statuses, dict):
+        changed: list[tuple[str, str, str]] = []
+        for node_id, node in by_id.items():
+            prev = previous_statuses.get(node_id)
+            if prev is None:
+                continue
+            now_status = str(node.get("status"))
+            if now_status != prev:
+                changed.append((node_id, str(prev), now_status))
+        report.details["milestone_status_changes"] = [
+            {"id": node_id, "from": old_status, "to": new_status}
+            for node_id, old_status, new_status in changed
+        ]
+        if len(changed) != 1:
+            if changed:
+                preview = ", ".join([f"{node_id}:{old_status}->{new_status}" for node_id, old_status, new_status in changed])
+            else:
+                preview = "无"
+            report.add_error(
+                "MILESTONE.md: 必须且只能有 1 个节点状态变化; "
+                f"当前检测到 {len(changed)} 处变化 [{preview}]，期望仅有一个 unfinished->done。"
+                "如果本次只是文档或界面调整，请先同步终检基线。"
+            )
+        else:
+            node_id, old_status, new_status = changed[0]
+            if not (old_status == "unfinished" and new_status == "done"):
+                report.add_error(
+                    f"MILESTONE[{node_id}]: 仅允许 unfinished->done，当前为 {old_status}->{new_status}"
+                )
+    else:
+        report.add_warning("MILESTONE.md: 缺少 finalize_state，已跳过状态差异校验（引导模式）")
+
+
+def validate_change(payload: dict[str, Any], state: dict[str, Any] | None, report: Report) -> None:
+    changes = payload.get("changes")
+    if not isinstance(changes, list) or not changes:
+        report.add_error("CHANGE.md: changes 必须是非空列表")
+        return
+    required = {"version", "date", "reason", "action", "observation", "impacted_files", "notes", "suggestions"}
+    versions: list[tuple[int, int, int]] = []
+    for idx, entry in enumerate(changes):
+        ctx = f"CHANGE[{idx}]"
+        if not isinstance(entry, dict):
+            report.add_error(f"{ctx}: 条目必须是对象")
+            continue
+        keys = set(entry.keys())
+        if keys != required:
+            missing = sorted(required - keys)
+            extra = sorted(keys - required)
+            if missing:
+                report.add_error(f"{ctx}: 缺少字段 {', '.join(missing)}")
+            if extra:
+                report.add_error(f"{ctx}: 存在多余字段 {', '.join(extra)}")
+            continue
+        version = str(entry.get("version", ""))
+        parsed_version = parse_semver(version)
+        if parsed_version is None:
+            report.add_error(f"{ctx}: 版本号不合法 {version}")
+        else:
+            versions.append(parsed_version)
+        date_value = str(entry.get("date", "")).strip()
+        if not ensure_minute_timestamp(date_value):
+            report.add_error(f"{ctx}: 日期格式错误 `{date_value}`，应为 YYYY-MM-DD-HH-MM")
+        for key in ["reason", "action", "observation"]:
+            value = entry.get(key)
+            if not isinstance(value, list) or len(value) == 0:
+                report.add_error(f"{ctx}: {key} 必须是非空列表")
+            elif any(not str(item).strip() for item in value):
+                report.add_error(f"{ctx}: {key} 存在空条目")
+        for key in ["notes", "suggestions", "impacted_files"]:
+            value = entry.get(key)
+            if not isinstance(value, list):
+                report.add_error(f"{ctx}: {key} 必须是列表")
+            elif any(not isinstance(item, str) for item in value):
+                report.add_error(f"{ctx}: {key} 只能包含字符串")
+
+    expected_versions = [(0, 0, i + 1) for i in range(len(changes))]
+    if versions and versions != expected_versions:
+        report.add_error("CHANGE.md: 版本必须从 0.0.1 开始按 patch 连续递增")
+
+    if progress_checks_disabled(state):
+        report.add_warning("CHANGE.md: 已检测到基线同步，本次跳过变更条目增量校验")
+        return
+
+    prev_entries = None
+    if isinstance(state, dict):
+        prev_entries = state.get("change_entries")
+    if isinstance(prev_entries, list):
+        if len(changes) != len(prev_entries) + 1:
+            report.add_error("CHANGE.md: 必须且只能新增一条变更记录")
+        else:
+            if changes[:-1] != prev_entries:
+                report.add_error("CHANGE.md: 历史变更记录被修改或删除")
+    else:
+        report.add_warning("CHANGE.md: 缺少 finalize_state，已跳过历史差异校验（引导模式）")
+
+
+def validate_tree(text: str, payload: dict[str, Any], state: dict[str, Any] | None, report: Report) -> None:
+    nodes = payload.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        report.add_error("TREE.md: nodes 必须是非空列表")
+        return
+    required = {"path", "name", "parent", "type", "status", "last_modified", "editable", "note"}
+    seen_paths: set[str] = set()
+    for idx, node in enumerate(nodes):
+        ctx = f"TREE[{idx}]"
+        if not isinstance(node, dict):
+            report.add_error(f"{ctx}: 节点必须是对象")
+            continue
+        keys = set(node.keys())
+        if keys != required:
+            missing = sorted(required - keys)
+            extra = sorted(keys - required)
+            if missing:
+                report.add_error(f"{ctx}: 缺少字段 {', '.join(missing)}")
+            if extra:
+                report.add_error(f"{ctx}: 存在多余字段 {', '.join(extra)}")
+            continue
+        path = str(node.get("path", "")).strip()
+        path_ctx = f"TREE[path={path or '?'}]"
+        if not path:
+            report.add_error(f"{ctx}: path 不能为空")
+            continue
+        if path in seen_paths:
+            report.add_error(f"{path_ctx}: path 重复")
+        seen_paths.add(path)
+        node_type = str(node.get("type"))
+        if node_type not in {"file", "dir"}:
+            report.add_error(f"{path_ctx}: type 非法")
+        status = str(node.get("status"))
+        if status not in {"active", "deleted"}:
+            report.add_error(f"{path_ctx}: status 非法")
+        if not ensure_minute_timestamp(str(node.get("last_modified", ""))):
+            report.add_error(f"{path_ctx}: last_modified 必须是 YYYY-MM-DD-HH-MM")
+        if not isinstance(node.get("editable"), bool):
+            report.add_error(f"{path_ctx}: editable 必须是布尔值")
+        note_text = str(node.get("note", "")).strip()
+        if not note_text:
+            report.add_error(f"{path_ctx}: note 不能为空")
+        elif any(hint in note_text for hint in TREE_NOTE_FORBIDDEN_HINTS):
+            report.add_error(f"{path_ctx}: note 需描述文件在项目中的作用，不能写文件属性")
+
+    try:
+        declared_text = extract_tree_text(text)
+    except ValueError as exc:
+        report.add_error(f"TREE.md: {exc}")
+        declared_text = ""
+
+    tree_module = load_tree_module()
+    expected_text = normalize_text(
+        tree_module.build_tree_text({"nodes": nodes, "last_updated": now_stamp()})  # type: ignore[arg-type]
+    ).strip()
+    if declared_text.strip() != expected_text:
+        report.add_error("TREE.md: TREE_TEXT 与 DATA 中 active 节点不一致")
+
+    prev_nodes = None
+    if isinstance(state, dict):
+        prev_nodes = state.get("tree_nodes")
+    if isinstance(prev_nodes, list):
+        prev_deleted = {str(n.get("path")) for n in prev_nodes if isinstance(n, dict) and n.get("status") == "deleted"}
+        now_paths = {str(n.get("path")) for n in nodes if isinstance(n, dict)}
+        missing_deleted = sorted(p for p in prev_deleted if p not in now_paths)
+        if missing_deleted:
+            report.add_error(f"TREE.md: 已删除路径被移除而非保留记录: {', '.join(missing_deleted)}")
+
+
+def validate_agents_artifacts_layout(report: Report) -> None:
+    root = ROOT / "agents_artifacts"
+    if not root.exists():
+        report.add_error("agents_artifacts: 目录不存在")
+        return
+    allowed_dirs = {"logs", "notes", "outputs"}
+    for child in root.iterdir():
+        if child.is_file():
+            report.add_error(f"agents_artifacts: 根目录不允许直接放文件 -> {child.name}")
+            continue
+        if child.is_dir() and child.name not in allowed_dirs:
+            report.add_error(f"agents_artifacts: 存在未允许的子目录 -> {child.name}")
+
+
+def validate_read_only_and_frozen_dirs(baseline: dict[str, Any], report: Report) -> None:
+    read_only_hashes = baseline.get("read_only_hashes")
+    if not isinstance(read_only_hashes, dict):
+        report.add_error("baseline: 缺少 read_only_hashes")
+        return
+    for rel in READ_ONLY_FILES:
+        path = ROOT / rel
+        if not path.exists():
+            report.add_error(f"只读文件缺失: {rel}")
+            continue
+        current_hash = sha256_text(read_text(path))
+        expected_hash = str(read_only_hashes.get(rel, ""))
+        if current_hash != expected_hash:
+            report.add_error(f"只读文件被修改: {rel}")
+
+    standards_known = baseline.get("standards_file_list")
+    if isinstance(standards_known, list):
+        current = sorted((p.relative_to(ROOT).as_posix() for p in (ROOT / "agents_standards").glob("*.md")))
+        expected = sorted(str(v) for v in standards_known)
+        if current != expected:
+            report.add_error("agents_standards: 文件集合发生变化")
+
+    for key, folder in [("agents_tools_hashes", "agents_tools"), ("agents_web_hashes", "agents_web")]:
+        expected_map = baseline.get(key)
+        if not isinstance(expected_map, dict):
+            report.add_error(f"baseline: 缺少 {key}")
+            continue
+        current_map: dict[str, str] = {}
+        for path in (ROOT / folder).rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(ROOT).as_posix()
+            if "__pycache__" in rel or rel.endswith(".pyc"):
+                continue
+            current_map[rel] = sha256_text(read_text(path))
+        if set(current_map.keys()) != set(expected_map.keys()):
+            report.add_error(f"{folder}: 文件集合发生变化")
+            continue
+        for rel, digest in current_map.items():
+            if digest != expected_map.get(rel):
+                report.add_error(f"{folder}: 文件被修改 -> {rel}")
+
+
+def validate_metadata_headers(docs: dict[str, dict[str, Any]], baseline: dict[str, Any], report: Report) -> None:
+    for name in EDITABLE_FILES:
+        if name in docs:
+            ensure_frontmatter_for_editable(name, docs[name]["frontmatter"], report)
+
+    read_only_meta = baseline.get("read_only_frontmatter_keys")
+    if isinstance(read_only_meta, dict):
+        for rel in READ_ONLY_FILES:
+            path = ROOT / rel
+            if not path.exists():
+                continue
+            try:
+                frontmatter, _ = parse_frontmatter(read_text(path))
+            except ValueError:
+                report.add_error(f"{rel}: frontmatter 无效或缺失")
+                continue
+            expected_keys = set(read_only_meta.get(rel, []))
+            current_keys = set(frontmatter.keys())
+            if expected_keys and current_keys != expected_keys:
+                report.add_error(f"{rel}: frontmatter 字段集合发生变化")
+
+
+def save_doc_if_changed(name: str, docs: dict[str, dict[str, Any]], payload: dict[str, Any], new_last_updated: str) -> bool:
+    old_text = docs[name]["text"]
+    new_text = render_doc(name, new_last_updated, payload)
+    if normalize_text(old_text).strip() == normalize_text(new_text).strip():
+        return False
+    write_text(ROOT / name, new_text)
+    docs[name]["text"] = new_text
+    docs[name]["frontmatter"] = {"last_updated": new_last_updated}
+    docs[name]["payload"] = payload
+    return True
+
+
+def run_finalize(output_json: bool) -> int:
+    report = Report()
+    baseline = load_json_file(BASELINE_PATH)
+    if baseline is None:
+        report.add_error("缺少 baseline.json，请先执行 `python agents_tools/baseline_refresh.py`")
+        print_report(report, output_json)
+        return 1
+    state = load_json_file(FINALIZE_STATE_PATH)
+
+    tree_module = load_tree_module()
+    tree_module.sync_tree()
+    report.add_fix("已通过 tree.py 同步 TREE.md")
+
+    docs = load_docs(report)
+    if report.errors:
+        print_report(report, output_json)
+        return 1
+
+    now_value = now_stamp()
+    previous_hashes = {}
+    if isinstance(state, dict) and isinstance(state.get("file_hashes"), dict):
+        previous_hashes = {str(k): str(v) for k, v in state["file_hashes"].items()}
+    else:
+        previous_hashes = {}
+    current_hashes_before = compute_file_hashes()
+
+    if "CHANGE.md" in docs:
+        if migrate_change_dates(docs["CHANGE.md"]["payload"], report):
+            save_doc_if_changed("CHANGE.md", docs, docs["CHANGE.md"]["payload"], now_value)
+        changed = update_change_impacted_files(
+            docs["CHANGE.md"]["payload"],
+            previous_hashes=previous_hashes,
+            current_hashes=current_hashes_before,
+            report=report,
+        )
+        if changed:
+            save_doc_if_changed("CHANGE.md", docs, docs["CHANGE.md"]["payload"], now_value)
+
+    previous_statuses = None
+    if isinstance(state, dict) and isinstance(state.get("milestone_statuses"), dict):
+        previous_statuses = {str(k): str(v) for k, v in state["milestone_statuses"].items()}
+    if "MILESTONE.md" in docs and update_milestone_updated_at(docs["MILESTONE.md"]["payload"], previous_statuses, now_value):
+        report.add_fix("已自动更新里程碑状态变更节点的 updated_at")
+        save_doc_if_changed("MILESTONE.md", docs, docs["MILESTONE.md"]["payload"], now_value)
+
+    if "CHANGE.md" in docs and not ensure_minute_timestamp(docs["CHANGE.md"]["frontmatter"].get("last_updated", "")):
+        save_doc_if_changed("CHANGE.md", docs, docs["CHANGE.md"]["payload"], now_value)
+    if "MILESTONE.md" in docs and not ensure_minute_timestamp(docs["MILESTONE.md"]["frontmatter"].get("last_updated", "")):
+        save_doc_if_changed("MILESTONE.md", docs, docs["MILESTONE.md"]["payload"], now_value)
+
+    validate_read_only_and_frozen_dirs(baseline, report)
+    validate_agents_artifacts_layout(report)
+    validate_metadata_headers(docs, baseline, report)
+
+    if "MILESTONE.md" in docs:
+        validate_milestone(docs["MILESTONE.md"]["payload"], baseline=baseline, state=state, report=report)
+    if "CHANGE.md" in docs:
+        validate_change(docs["CHANGE.md"]["payload"], state=state, report=report)
+    if "TREE.md" in docs:
+        validate_tree(docs["TREE.md"]["text"], docs["TREE.md"]["payload"], state=state, report=report)
+
+    if not report.errors:
+        current_hashes_after = compute_file_hashes()
+        milestone_statuses: dict[str, str] = {}
+        for node in docs["MILESTONE.md"]["payload"].get("milestones", []):
+            if isinstance(node, dict):
+                milestone_statuses[str(node.get("id"))] = str(node.get("status"))
+        finalize_state = {
+            "last_finalized_at": now_stamp(),
+            "file_hashes": current_hashes_after,
+            "milestone_statuses": milestone_statuses,
+            "change_entries": docs["CHANGE.md"]["payload"].get("changes", []),
+            "tree_nodes": docs["TREE.md"]["payload"].get("nodes", []),
+            "skip_progress_checks_once": False,
+            "state_source": "finalize",
+        }
+        FINALIZE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        FINALIZE_STATE_PATH.write_text(json.dumps(finalize_state, ensure_ascii=False, indent=2), encoding="utf-8")
+        report.add_fix("已更新 finalize_state")
+
+    report.details["baseline_path"] = BASELINE_PATH.relative_to(ROOT).as_posix()
+    report.details["finalize_state_path"] = FINALIZE_STATE_PATH.relative_to(ROOT).as_posix()
+    print_report(report, output_json)
+    return 0 if not report.errors else 1
+
+
+def print_report(report: Report, output_json: bool) -> None:
+    payload = report.to_dict()
+    if output_json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+    print(f"状态: {payload['status']}")
+    print(f"错误: {payload['error_count']}，警告: {payload['warning_count']}，修复: {payload['fix_count']}")
+    if report.errors:
+        print("错误详情:")
+        for item in report.errors:
+            print(f"  - {item}")
+    if report.warnings:
+        print("警告详情:")
+        for item in report.warnings:
+            print(f"  - {item}")
+    if report.fixes:
+        print("修复详情:")
+        for item in report.fixes:
+            print(f"  - {item}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="AGENTS 终检校验器（仅支持 finalize）")
+    parser.add_argument("command", choices=["finalize"], help="仅支持 finalize 命令")
+    parser.add_argument("--json", action="store_true", help="输出 JSON 报告")
+    args = parser.parse_args()
+    if args.command == "finalize":
+        return run_finalize(output_json=args.json)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

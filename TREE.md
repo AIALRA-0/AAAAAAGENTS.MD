@@ -1,0 +1,445 @@
+---
+last_updated: 2026-03-08-23-38
+---
+
+# TREE
+
+## TREE_TEXT
+```text
+.
+├── agents_artifacts
+│   ├── logs
+│   ├── notes
+│   └── outputs
+│       ├── baseline.json
+│       ├── finalize_state.json
+│       └── rules_snapshot.json
+├── agents_standards
+│   ├── BATCH_STANDARD.md
+│   ├── HTML_STANDARD.md
+│   ├── JSON_STANDARD.md
+│   ├── MARKDOWN_STANDARD.md
+│   ├── PYTHON_STANDARD.md
+│   ├── SHELL_SCRIPT_STANDARD.md
+│   ├── TEXT_STANDARD.md
+│   └── YAML_STANDARD.md
+├── agents_tools
+│   ├── baseline_refresh.py
+│   ├── tree.py
+│   └── verify_rules.py
+├── agents_web
+│   ├── static
+│   │   ├── app.css
+│   │   └── app.js
+│   ├── templates
+│   │   └── index.html
+│   ├── renderer.py
+│   └── server.py
+├── AGENTS.md
+├── BACKGROUND.md
+├── CHANGE.md
+├── MILESTONE.md
+├── requirements.txt
+├── start_web.bat
+├── start_web.py
+├── start_web.sh
+└── TREE.md
+```
+
+## DATA
+```yaml
+{
+  "nodes": [
+    {
+      "path": ".",
+      "name": ".",
+      "parent": "",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-22-48",
+      "editable": false,
+      "note": "项目根目录，集中管理规则文档、自动化脚本与可视化模块"
+    },
+    {
+      "path": "agents_artifacts",
+      "name": "agents_artifacts",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-04-37",
+      "editable": false,
+      "note": "运行产物根目录，存放日志、备注与输出快照"
+    },
+    {
+      "path": "agents_standards",
+      "name": "agents_standards",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-22-03",
+      "editable": false,
+      "note": "标准规范目录，存放代码与文档规范文件"
+    },
+    {
+      "path": "agents_tools",
+      "name": "agents_tools",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-13-55",
+      "editable": false,
+      "note": "自动化脚本目录，负责同步、校验与基线维护"
+    },
+    {
+      "path": "agents_web",
+      "name": "agents_web",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-22-26",
+      "editable": false,
+      "note": "本地可视化服务目录"
+    },
+    {
+      "path": "AGENTS.md",
+      "name": "AGENTS.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-20-19",
+      "editable": false,
+      "note": "项目总控约束文件，定义 Agent 工作流程与边界"
+    },
+    {
+      "path": "BACKGROUND.md",
+      "name": "BACKGROUND.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-15-50",
+      "editable": false,
+      "note": "项目背景与资源信息模板，由用户维护"
+    },
+    {
+      "path": "CHANGE.md",
+      "name": "CHANGE.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-23-38",
+      "editable": true,
+      "note": "结构化变更日志文件"
+    },
+    {
+      "path": "MILESTONE.md",
+      "name": "MILESTONE.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-23-37",
+      "editable": true,
+      "note": "里程碑规划与节点状态记录文件"
+    },
+    {
+      "path": "requirements.txt",
+      "name": "requirements.txt",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-05-11",
+      "editable": false,
+      "note": "Python 依赖清单文件"
+    },
+    {
+      "path": "start_web.bat",
+      "name": "start_web.bat",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-23",
+      "editable": false,
+      "note": "Windows 默认入口脚本，双击后自动调用 Python 启动本地可视化服务"
+    },
+    {
+      "path": "start_web.py",
+      "name": "start_web.py",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-22",
+      "editable": false,
+      "note": "跨平台 Python 一键启动本地可视化服务脚本"
+    },
+    {
+      "path": "start_web.sh",
+      "name": "start_web.sh",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-23",
+      "editable": false,
+      "note": "Linux 一键启动本地可视化服务脚本"
+    },
+    {
+      "path": "TREE.md",
+      "name": "TREE.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-23-38",
+      "editable": true,
+      "note": "项目文件树与节点作用说明文件"
+    },
+    {
+      "path": "start_web.ps1",
+      "name": "start_web.ps1",
+      "parent": ".",
+      "type": "file",
+      "status": "deleted",
+      "last_modified": "2026-03-08-16-17",
+      "editable": false,
+      "note": "Windows 兼容入口脚本，转调 Python 启动器，非默认入口"
+    },
+    {
+      "path": "agents_artifacts/logs",
+      "name": "logs",
+      "parent": "agents_artifacts",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-04-37",
+      "editable": false,
+      "note": "执行日志目录，用于排查任务过程问题"
+    },
+    {
+      "path": "agents_artifacts/notes",
+      "name": "notes",
+      "parent": "agents_artifacts",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-04-37",
+      "editable": false,
+      "note": "补充备注目录，用于保存人工说明"
+    },
+    {
+      "path": "agents_artifacts/outputs",
+      "name": "outputs",
+      "parent": "agents_artifacts",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-22-07",
+      "editable": false,
+      "note": "脚本输出目录，用于保存基线与状态快照"
+    },
+    {
+      "path": "agents_artifacts/outputs/baseline.json",
+      "name": "baseline.json",
+      "parent": "agents_artifacts/outputs",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-23-38",
+      "editable": false,
+      "note": "用户基线文件，记录边界哈希与结构锁定信息"
+    },
+    {
+      "path": "agents_artifacts/outputs/finalize_state.json",
+      "name": "finalize_state.json",
+      "parent": "agents_artifacts/outputs",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-23-38",
+      "editable": false,
+      "note": "收尾状态文件，记录上次任务对比基线"
+    },
+    {
+      "path": "agents_artifacts/outputs/rules_snapshot.json",
+      "name": "rules_snapshot.json",
+      "parent": "agents_artifacts/outputs",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-05-12",
+      "editable": false,
+      "note": "历史规则快照文件，用于兼容旧流程"
+    },
+    {
+      "path": "agents_standards/BATCH_STANDARD.md",
+      "name": "BATCH_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-04",
+      "editable": false,
+      "note": "BATCH 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_standards/HTML_STANDARD.md",
+      "name": "HTML_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-06",
+      "editable": false,
+      "note": "HTML 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_standards/JSON_STANDARD.md",
+      "name": "JSON_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-06",
+      "editable": false,
+      "note": "JSON 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_standards/MARKDOWN_STANDARD.md",
+      "name": "MARKDOWN_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-21-54",
+      "editable": false,
+      "note": "Markdown 编写规范文档"
+    },
+    {
+      "path": "agents_standards/PYTHON_STANDARD.md",
+      "name": "PYTHON_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-21-59",
+      "editable": false,
+      "note": "Python 开发规范文档"
+    },
+    {
+      "path": "agents_standards/SHELL_SCRIPT_STANDARD.md",
+      "name": "SHELL_SCRIPT_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-05",
+      "editable": false,
+      "note": "SHELL SCRIPT 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_standards/TEXT_STANDARD.md",
+      "name": "TEXT_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-05",
+      "editable": false,
+      "note": "TEXT 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_standards/YAML_STANDARD.md",
+      "name": "YAML_STANDARD.md",
+      "parent": "agents_standards",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-07",
+      "editable": false,
+      "note": "YAML 标准规范文件，定义该类型内容的编写、注释、格式与校验要求"
+    },
+    {
+      "path": "agents_tools/baseline_refresh.py",
+      "name": "baseline_refresh.py",
+      "parent": "agents_tools",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-21-31",
+      "editable": false,
+      "note": "用户基线刷新脚本，重建结构与哈希基线"
+    },
+    {
+      "path": "agents_tools/tree.py",
+      "name": "tree.py",
+      "parent": "agents_tools",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-29",
+      "editable": false,
+      "note": "文件树同步脚本，生成 TREE_TEXT 与节点数据"
+    },
+    {
+      "path": "agents_tools/verify_rules.py",
+      "name": "verify_rules.py",
+      "parent": "agents_tools",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-21-46",
+      "editable": false,
+      "note": "唯一 finalize 校验脚本，执行全量规则检查"
+    },
+    {
+      "path": "agents_web/static",
+      "name": "static",
+      "parent": "agents_web",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-22-26",
+      "editable": false,
+      "note": "Web 静态资源目录，存放样式与前端脚本"
+    },
+    {
+      "path": "agents_web/templates",
+      "name": "templates",
+      "parent": "agents_web",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-08-18-11",
+      "editable": false,
+      "note": "Web 前端模板目录"
+    },
+    {
+      "path": "agents_web/renderer.py",
+      "name": "renderer.py",
+      "parent": "agents_web",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-22",
+      "editable": false,
+      "note": "文档解析与流程图渲染逻辑"
+    },
+    {
+      "path": "agents_web/server.py",
+      "name": "server.py",
+      "parent": "agents_web",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-28",
+      "editable": false,
+      "note": "Web 服务入口与 API 路由实现"
+    },
+    {
+      "path": "agents_web/static/app.css",
+      "name": "app.css",
+      "parent": "agents_web/static",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-26",
+      "editable": false,
+      "note": "工作台样式文件，定义整体界面布局与视觉风格"
+    },
+    {
+      "path": "agents_web/static/app.js",
+      "name": "app.js",
+      "parent": "agents_web/static",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-26",
+      "editable": false,
+      "note": "工作台前端脚本文件，处理交互、渲染与接口调用"
+    },
+    {
+      "path": "agents_web/templates/index.html",
+      "name": "index.html",
+      "parent": "agents_web/templates",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-08-22-28",
+      "editable": false,
+      "note": "仪表板页面模板，提供树导航与节点表单编辑"
+    }
+  ]
+}
+```

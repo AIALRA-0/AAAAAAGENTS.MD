@@ -1,0 +1,15 @@
+flowchart TD
+    A[User request arrives] --> B[Agent reads AGENTS/BACKGROUND/STANDARDS]
+    B --> C[Agent implements task changes]
+    C --> D[Update MILESTONE.md]
+    C --> E[Update CHANGE.md]
+    C --> F[Update TREE.md]
+    D --> G[Run tree sync]
+    E --> G
+    F --> G
+    G --> H[Run finalize verification]
+    H --> I{Need structure reset}
+    I -- Yes --> J[Run baseline refresh]
+    I -- No --> K[Complete]
+    J --> H
+    K --> L[Review in local web dashboard]

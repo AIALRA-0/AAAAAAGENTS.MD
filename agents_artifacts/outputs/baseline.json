@@ -1,0 +1,122 @@
+{
+  "updated_at": "2026-03-08-23-38",
+  "read_only_hashes": {
+    "AGENTS.md": "a8ad874bfe84c85bd2173a6ede6c022531e81e8c39730a27ae5556355620192f",
+    "BACKGROUND.md": "3835e49bfa76ca18542465ab472eb4b49b1c31e8648918201aedeb530f8e6c64",
+    "agents_standards/PYTHON_STANDARD.md": "c74403e81001fde57f27589dd2f83155d3c26780dd10815d26c1654e9d157223",
+    "agents_standards/MARKDOWN_STANDARD.md": "b7f20b1d1a8d4293c21c6923d9cb7fe3cab271cdf3276ac27893fa12439080c8"
+  },
+  "read_only_frontmatter_keys": {
+    "AGENTS.md": [
+      "last_updated"
+    ],
+    "BACKGROUND.md": [
+      "last_updated"
+    ],
+    "agents_standards/PYTHON_STANDARD.md": [
+      "last_updated"
+    ],
+    "agents_standards/MARKDOWN_STANDARD.md": [
+      "last_updated"
+    ]
+  },
+  "standards_file_list": [
+    "agents_standards/BATCH_STANDARD.md",
+    "agents_standards/HTML_STANDARD.md",
+    "agents_standards/JSON_STANDARD.md",
+    "agents_standards/MARKDOWN_STANDARD.md",
+    "agents_standards/PYTHON_STANDARD.md",
+    "agents_standards/SHELL_SCRIPT_STANDARD.md",
+    "agents_standards/TEXT_STANDARD.md",
+    "agents_standards/YAML_STANDARD.md"
+  ],
+  "agents_tools_hashes": {
+    "agents_tools/baseline_refresh.py": "70dbd66f18f44330dee9779e9e20c68d67fa1ec9d9a4ae15e18fffb209d0e650",
+    "agents_tools/tree.py": "0310cfdc6bb98424acedf93e7b0d35875c44801ec394616a8d3b0ce5f0e0ae20",
+    "agents_tools/verify_rules.py": "c1ad9ce6126d3e6121f625e2918a1ac4dfc5cc3b91e0184a08e7b892f76b7ea9"
+  },
+  "agents_web_hashes": {
+    "agents_web/renderer.py": "816908009bc6ec35ab4cc3ba90159874e863d6f7319bb9079f6db543d8a10b19",
+    "agents_web/server.py": "3f676d08b746d238c50d7ed72639172c963027f416610b5944cec37289943266",
+    "agents_web/static/app.css": "1c73ef1cf19b627d0bab0a6ef46ecc01824491800a34c3a7e633afa499fc68fe",
+    "agents_web/static/app.js": "1aea937a38653e5884a6146ae8c3e0d74d78b70bdef3c704027e5b3bc6b44bf1",
+    "agents_web/templates/index.html": "5498f0195d44798b37cc93b89114f1f033fb26725f78ea684b54aca6fc30b066"
+  },
+  "milestone_structure": {
+    "ids": [
+      "MS-INIT-001"
+    ],
+    "signature_by_id": {
+      "MS-INIT-001": {
+        "id": "MS-INIT-001",
+        "title": "初始化通用项目骨架",
+        "prerequisites": [],
+        "postnodes": [],
+        "why": [
+          "建立统一的 AGENTS 协作规则与基础工程结构，让所有参与者在同一规范下工作",
+          "减少未来新增任务或模块时因流程理解不同而产生的执行偏差，降低协作摩擦",
+          "让项目关键规则可以被追溯、自动校验，并具备清晰的审计能力",
+          "通过脚本化工具自动检查项目状态，减少依赖口头约定带来的隐性风险",
+          "为后续扩展新的标准文件或模块提供稳定且兼容的初始化基础"
+        ],
+        "what": [
+          "建立 AGENTS、BACKGROUND、MILESTONE、CHANGE、TREE 五类核心文档的最小可用模板",
+          "打通 tree、baseline_refresh、verify_rules 三个核心脚本，使其形成完整执行流程",
+          "实现本地可视化工作台的基础能力，支持文档读取、编辑、保存与预览",
+          "建立项目目录结构与文件树的自动索引机制，保证 TREE 文件与真实目录保持同步",
+          "初始化项目第一份基线文件以及终检状态文件，为后续校验提供参考基准"
+        ],
+        "how": [
+          "先按照约束模板定义各类文档字段结构，再填充最小可执行示例数据",
+          "执行 tree sync 生成项目 TREE 文件，记录当前目录结构",
+          "执行 baseline_refresh 生成项目基线，用于未来变更对比",
+          "在可视化页面测试文档读取、编辑、保存与预览流程是否完整可用",
+          "运行 finalize 执行规则校验，并自动修复所有可修复问题",
+          "回放完整初始化流程，并将初始化阶段结果记录到 CHANGE 文件中"
+        ],
+        "verify": [
+          "运行 python agents_tools/tree.py sync 后脚本执行成功，无报错",
+          "运行 python agents_tools/baseline_refresh.py 后返回 status=ok",
+          "运行 python agents_tools/verify_rules.py finalize --json 后返回 status=ok",
+          "可视化页面能够正确加载并展示 MILESTONE、CHANGE、TREE 三类核心文档",
+          "TREE 文件中新增节点均包含非空 note 字段，且结构与真实目录保持一致"
+        ],
+        "ddl": "2026-03-10",
+        "notes": [
+          "当前里程碑仅用于完成通用项目初始化阶段",
+          "在新增新的里程碑之前，需要确认模板字段与规则校验逻辑保持一致",
+          "如果修改只读约束文件，需要先执行 baseline_refresh 更新基线",
+          "初始化完成后，可以基于该节点继续扩展新的业务里程碑",
+          "本节点将作为后续流程图生成与规则校验的参考起点"
+        ]
+      }
+    }
+  },
+  "file_hashes": {
+    "AGENTS.md": "a8ad874bfe84c85bd2173a6ede6c022531e81e8c39730a27ae5556355620192f",
+    "agents_standards/BATCH_STANDARD.md": "0f8ba2b47d4768144c3639ef1169f86696379c088533604df4f485d10d35eec5",
+    "agents_standards/HTML_STANDARD.md": "f756cafa5bbe41dbe4162ac0db02030c4e569d7aa6cf56b6598ce93ad74eedee",
+    "agents_standards/JSON_STANDARD.md": "8b25532df3db1f3b640bcbe5c0e0e370652ef33634425ec8eee2a1f6c232bbdd",
+    "agents_standards/MARKDOWN_STANDARD.md": "b7f20b1d1a8d4293c21c6923d9cb7fe3cab271cdf3276ac27893fa12439080c8",
+    "agents_standards/PYTHON_STANDARD.md": "c74403e81001fde57f27589dd2f83155d3c26780dd10815d26c1654e9d157223",
+    "agents_standards/SHELL_SCRIPT_STANDARD.md": "5aae9096c3e3b8556c22b11acf71cf77489db93c242c16c9de66aca111fdb7d6",
+    "agents_standards/TEXT_STANDARD.md": "2722bb26ad007b85fbdafe12949518e16a44df97e5431e7eb912afaa73f590b3",
+    "agents_standards/YAML_STANDARD.md": "f6ebee15f80c70d6a66da20a1fda44151be1cc8a525513635da9b80a43667e71",
+    "agents_tools/baseline_refresh.py": "70dbd66f18f44330dee9779e9e20c68d67fa1ec9d9a4ae15e18fffb209d0e650",
+    "agents_tools/tree.py": "0310cfdc6bb98424acedf93e7b0d35875c44801ec394616a8d3b0ce5f0e0ae20",
+    "agents_tools/verify_rules.py": "c1ad9ce6126d3e6121f625e2918a1ac4dfc5cc3b91e0184a08e7b892f76b7ea9",
+    "agents_web/renderer.py": "816908009bc6ec35ab4cc3ba90159874e863d6f7319bb9079f6db543d8a10b19",
+    "agents_web/server.py": "3f676d08b746d238c50d7ed72639172c963027f416610b5944cec37289943266",
+    "agents_web/static/app.css": "1c73ef1cf19b627d0bab0a6ef46ecc01824491800a34c3a7e633afa499fc68fe",
+    "agents_web/static/app.js": "1aea937a38653e5884a6146ae8c3e0d74d78b70bdef3c704027e5b3bc6b44bf1",
+    "agents_web/templates/index.html": "5498f0195d44798b37cc93b89114f1f033fb26725f78ea684b54aca6fc30b066",
+    "BACKGROUND.md": "3835e49bfa76ca18542465ab472eb4b49b1c31e8648918201aedeb530f8e6c64",
+    "CHANGE.md": "1e66ad57f58e6922c2dc266a1eb664c06053ac0082a20a863c0afd92765fee37",
+    "MILESTONE.md": "a14b00d57833c5eceaead290f2e735536bc12adfd19b7f6f4053fddf6b0bdd3b",
+    "requirements.txt": "222dc59024b38b431c44ff71b68787e75cc4ca2773c94d6da0223ffe008e29fe",
+    "start_web.bat": "18ae84156a3ee119e62d08b2e7156bc6aaf900a2507ff53e2b2d8330db38ec10",
+    "start_web.py": "7edf93941a44dee09fb891377d6dcd557d74c3e5ddb147ab93382c085f649c60",
+    "start_web.sh": "df86d61c98a1ffd5eec94a261745f937cc41435c3c5ca5112dab37a4e377c8e9",
+    "TREE.md": "1011e195d8296156e5c697088b7801efd354b1ad89d1d35b2c2a67693e4606ef"
+  }
+}

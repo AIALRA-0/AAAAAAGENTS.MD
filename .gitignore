@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.venv/
+.venv-win/
+.venv-linux/
+node_modules/
