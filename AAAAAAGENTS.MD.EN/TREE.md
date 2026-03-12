@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-03-08-23-38
+last_updated: 2026-03-12-08-40
 ---
 
 # TREE
@@ -14,6 +14,9 @@ last_updated: 2026-03-08-23-38
 │       ├── baseline.json
 │       ├── finalize_state.json
 │       └── rules_snapshot.json
+├── agents_docs
+│   └── diagrams
+│       └── how_it_works.mmd
 ├── agents_standards
 │   ├── BATCH_STANDARD.md
 │   ├── HTML_STANDARD.md
@@ -40,6 +43,7 @@ last_updated: 2026-03-08-23-38
 ├── CHANGE.md
 ├── MILESTONE.md
 ├── requirements.txt
+├── RESOURCE.md
 ├── start_web.bat
 ├── start_web.py
 ├── start_web.sh
@@ -56,7 +60,7 @@ last_updated: 2026-03-08-23-38
       "parent": "",
       "type": "dir",
       "status": "active",
-      "last_modified": "2026-03-08-22-48",
+      "last_modified": "2026-03-12-07-43",
       "editable": false,
       "note": "Project root directory, centralized management of rule documents, automation scripts and visualization modules"
     },
@@ -69,6 +73,16 @@ last_updated: 2026-03-08-23-38
       "last_modified": "2026-03-08-04-37",
       "editable": false,
       "note": "Run the product root directory, store logs, notes and output snapshots"
+    },
+    {
+      "path": "agents_docs",
+      "name": "agents_docs",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-11-08-32",
+      "editable": false,
+      "note": ""
     },
     {
       "path": "agents_standards",
@@ -106,7 +120,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-20-19",
+      "last_modified": "2026-03-12-07-42",
       "editable": false,
       "note": "Project master control constraint file, defining Agent workflow and boundaries"
     },
@@ -116,7 +130,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-15-50",
+      "last_modified": "2026-03-12-07-53",
       "editable": false,
       "note": "Project background and resource information templates, maintained by users"
     },
@@ -126,7 +140,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-07-53",
       "editable": true,
       "note": "Structured change log file"
     },
@@ -136,7 +150,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-37",
+      "last_modified": "2026-03-12-08-37",
       "editable": true,
       "note": "Milestone planning and node status record files"
     },
@@ -149,6 +163,16 @@ last_updated: 2026-03-08-23-38
       "last_modified": "2026-03-08-05-11",
       "editable": false,
       "note": "Python dependency manifest file"
+    },
+    {
+      "path": "RESOURCE.md",
+      "name": "RESOURCE.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-12-07-43",
+      "editable": false,
+      "note": ""
     },
     {
       "path": "start_web.bat",
@@ -166,7 +190,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-22",
+      "last_modified": "2026-03-09-01-15",
       "editable": false,
       "note": "Cross-platform Python can start local visualization service scripts with one click"
     },
@@ -186,7 +210,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-07-53",
       "editable": true,
       "note": "Project file tree and node function description file"
     },
@@ -236,7 +260,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_artifacts/outputs",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-08-40",
       "editable": false,
       "note": "User baseline file, recording boundary hash and structure locking information"
     },
@@ -246,7 +270,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_artifacts/outputs",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-08-40",
       "editable": false,
       "note": "Finishing status file, records the last task comparison baseline"
     },
@@ -261,12 +285,32 @@ last_updated: 2026-03-08-23-38
       "note": "Historical rule snapshot file for compatibility with old processes"
     },
     {
+      "path": "agents_docs/diagrams",
+      "name": "diagrams",
+      "parent": "agents_docs",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-09-00-16",
+      "editable": false,
+      "note": ""
+    },
+    {
+      "path": "agents_docs/diagrams/how_it_works.mmd",
+      "name": "how_it_works.mmd",
+      "parent": "agents_docs/diagrams",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-09-00-17",
+      "editable": false,
+      "note": ""
+    },
+    {
       "path": "agents_standards/BATCH_STANDARD.md",
       "name": "BATCH_STANDARD.md",
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-04",
+      "last_modified": "2026-03-09-00-52",
       "editable": false,
       "note": "BATCH standard specification file, defining the writing, annotation, format and verification requirements for this type of content"
     },
@@ -276,7 +320,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-06",
+      "last_modified": "2026-03-09-00-56",
       "editable": false,
       "note": "HTML standard specification document, defining the writing, annotation, format and verification requirements for this type of content"
     },
@@ -286,7 +330,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-06",
+      "last_modified": "2026-03-09-01-00",
       "editable": false,
       "note": "JSON standard specification file, defining the writing, annotation, format and verification requirements for this type of content"
     },
@@ -296,7 +340,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-54",
+      "last_modified": "2026-03-09-01-02",
       "editable": false,
       "note": "Markdown writing specification document"
     },
@@ -306,7 +350,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-59",
+      "last_modified": "2026-03-09-01-07",
       "editable": false,
       "note": "Python development specification document"
     },
@@ -316,7 +360,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-05",
+      "last_modified": "2026-03-09-01-11",
       "editable": false,
       "note": "SHELL SCRIPT standard specification document, which defines the writing, annotation, format and verification requirements for this type of content"
     },
@@ -326,7 +370,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-05",
+      "last_modified": "2026-03-09-01-14",
       "editable": false,
       "note": "TEXT standard specification file, which defines the writing, annotation, format and verification requirements for this type of content"
     },
@@ -336,7 +380,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_standards",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-07",
+      "last_modified": "2026-03-09-01-18",
       "editable": false,
       "note": "YAML standard specification file, defining the writing, annotation, format and verification requirements for this type of content"
     },
@@ -346,7 +390,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_tools",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-31",
+      "last_modified": "2026-03-12-08-38",
       "editable": false,
       "note": "User baseline refresh script, rebuild structure and hash baseline"
     },
@@ -356,7 +400,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_tools",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-29",
+      "last_modified": "2026-03-09-01-18",
       "editable": false,
       "note": "File tree synchronization script, generate TREE_TEXT and node data"
     },
@@ -366,7 +410,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_tools",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-46",
+      "last_modified": "2026-03-12-08-38",
       "editable": false,
       "note": "The only finalize verification script, performs full rule checking"
     },
@@ -396,7 +440,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-22",
+      "last_modified": "2026-03-12-08-39",
       "editable": false,
       "note": "Document parsing and flowchart rendering logic"
     },
@@ -406,7 +450,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-28",
+      "last_modified": "2026-03-12-08-39",
       "editable": false,
       "note": "Web service entrance and API routing implementation"
     },
@@ -426,7 +470,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web/static",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-26",
+      "last_modified": "2026-03-12-08-40",
       "editable": false,
       "note": "Workbench front-end script file, handles interaction, rendering and interface calling"
     },
@@ -436,7 +480,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web/templates",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-28",
+      "last_modified": "2026-03-09-01-17",
       "editable": false,
       "note": "Dashboard page template, providing tree navigation and node form editing"
     }

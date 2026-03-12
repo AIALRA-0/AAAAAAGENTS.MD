@@ -15,6 +15,7 @@ FINALIZE_STATE_PATH = ROOT / "agents_artifacts" / "outputs" / "finalize_state.js
 READ_ONLY_FILES = [
     "AGENTS.md",
     "BACKGROUND.md",
+    "RESOURCE.md",
     "agents_standards/PYTHON_STANDARD.md",
     "agents_standards/MARKDOWN_STANDARD.md",
 ]
@@ -31,6 +32,10 @@ IGNORED_HASH_FILES = {
 }
 DOC_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 DATA_BLOCK_RE = re.compile(r"##\s*DATA.*?```(?:yaml|yml|json)\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
+SECTION_H2_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
+SECTION_H3_RE = re.compile(r"^###\s+(.+?)\s*$")
+FIELD_RE = re.compile(r"^\s*-\s*([^:：]+?)\s*[:：]\s*(.*)$")
+LIST_ITEM_RE = re.compile(r"^\s{2,}-\s*(.+)$")
 TIME_FMT = "%Y-%m-%d-%H-%M"
 
 
@@ -64,8 +69,94 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return parsed
 
 
-def parse_data_payload(path: Path) -> dict[str, Any]:
-    text = read_text(path)
+def extract_section(text: str, section_name: str) -> str:
+    lines = normalize_text(text).splitlines()
+    start_idx = -1
+    for idx, line in enumerate(lines):
+        match = SECTION_H2_RE.match(line.strip())
+        if match and match.group(1).strip().lower() == section_name.strip().lower():
+            start_idx = idx + 1
+            break
+    if start_idx < 0:
+        return ""
+    end_idx = len(lines)
+    for idx in range(start_idx, len(lines)):
+        if SECTION_H2_RE.match(lines[idx].strip()):
+            end_idx = idx
+            break
+    return "\n".join(lines[start_idx:end_idx]).strip()
+
+
+def normalize_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text or text == "[]":
+        return []
+    return [text]
+
+
+def parse_markdown_records(section_text: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    list_field: str | None = None
+    for raw_line in normalize_text(section_text).splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            continue
+        h3 = SECTION_H3_RE.match(line.strip())
+        if h3:
+            current = {"__title": h3.group(1).strip()}
+            records.append(current)
+            list_field = None
+            continue
+        if current is None:
+            continue
+        item_match = LIST_ITEM_RE.match(line)
+        if item_match and list_field:
+            item = item_match.group(1).strip()
+            if item:
+                existing = current.get(list_field)
+                if not isinstance(existing, list):
+                    existing = []
+                    current[list_field] = existing
+                existing.append(item)
+            continue
+        field_match = FIELD_RE.match(line)
+        if field_match:
+            key = field_match.group(1).strip()
+            value = field_match.group(2).strip()
+            if value == "" or value == "[]":
+                current[key] = []
+                list_field = key if value == "" else None
+            else:
+                current[key] = value
+                list_field = None
+            continue
+    return records
+
+
+def parse_layout_positions(layout_text: str) -> dict[str, dict[str, float]]:
+    if not layout_text.strip():
+        return {}
+    records = parse_markdown_records(layout_text)
+    if not records:
+        return {}
+    positions: dict[str, dict[str, float]] = {}
+    for rec in records:
+        node_id = str(rec.get("id") or rec.get("__title") or "").strip()
+        if not node_id:
+            continue
+        try:
+            x = float(str(rec.get("x", "")).strip())
+            y = float(str(rec.get("y", "")).strip())
+        except ValueError:
+            continue
+        positions[node_id] = {"x": x, "y": y}
+    return positions
+
+
+def parse_json_data_payload(text: str) -> dict[str, Any]:
     match = DATA_BLOCK_RE.search(text)
     if not match:
         return {}
@@ -76,6 +167,56 @@ def parse_data_payload(path: Path) -> dict[str, Any]:
     if isinstance(payload, dict):
         return payload
     return {}
+
+
+def parse_data_payload(path: Path) -> dict[str, Any]:
+    text = read_text(path)
+    if path.name == "MILESTONE.md":
+        records = parse_markdown_records(extract_section(text, "DATA"))
+        milestones: list[dict[str, Any]] = []
+        for rec in records:
+            node_id = str(rec.get("id") or rec.get("__title") or "").strip()
+            if not node_id:
+                continue
+            milestones.append(
+                {
+                    "id": node_id,
+                    "title": str(rec.get("title", "")).strip(),
+                    "prerequisites": normalize_list(rec.get("prerequisites")),
+                    "postnodes": normalize_list(rec.get("postnodes")),
+                    "why": normalize_list(rec.get("why")),
+                    "what": normalize_list(rec.get("what")),
+                    "how": normalize_list(rec.get("how")),
+                    "verify": normalize_list(rec.get("verify")),
+                    "status": str(rec.get("status", "")).strip(),
+                    "notes": normalize_list(rec.get("notes")),
+                    "updated_at": str(rec.get("updated_at", "")).strip(),
+                }
+            )
+        if milestones:
+            return {"milestones": milestones, "layout": {"positions": parse_layout_positions(extract_section(text, "LAYOUT"))}}
+    if path.name == "CHANGE.md":
+        records = parse_markdown_records(extract_section(text, "DATA"))
+        changes: list[dict[str, Any]] = []
+        for rec in records:
+            version = str(rec.get("version") or rec.get("__title") or "").strip()
+            if not version:
+                continue
+            changes.append(
+                {
+                    "version": version,
+                    "date": str(rec.get("date", "")).strip(),
+                    "reason": normalize_list(rec.get("reason")),
+                    "action": normalize_list(rec.get("action")),
+                    "observation": normalize_list(rec.get("observation")),
+                    "impacted_files": normalize_list(rec.get("impacted_files")),
+                    "notes": normalize_list(rec.get("notes")),
+                    "suggestions": normalize_list(rec.get("suggestions")),
+                }
+            )
+        if changes:
+            return {"changes": changes}
+    return parse_json_data_payload(text)
 
 
 def to_rel(path: Path) -> str:
@@ -128,7 +269,6 @@ def milestone_signature(node: dict[str, Any]) -> dict[str, Any]:
         "what": node.get("what"),
         "how": node.get("how"),
         "verify": node.get("verify"),
-        "ddl": node.get("ddl"),
         "notes": node.get("notes"),
     }
 

@@ -19,6 +19,7 @@ FINALIZE_STATE_PATH = ROOT / "agents_artifacts" / "outputs" / "finalize_state.js
 READ_ONLY_FILES = [
     "AGENTS.md",
     "BACKGROUND.md",
+    "RESOURCE.md",
     "agents_standards/PYTHON_STANDARD.md",
     "agents_standards/MARKDOWN_STANDARD.md",
 ]
@@ -28,8 +29,74 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 DOC_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 DATA_BLOCK_RE = re.compile(r"##\s*DATA.*?```(?:yaml|yml|json)\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
 TREE_TEXT_RE = re.compile(r"##\s*TREE_TEXT.*?```text\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
+SECTION_H2_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
+SECTION_H3_RE = re.compile(r"^###\s+(.+?)\s*$")
+FIELD_RE = re.compile(r"^\s*-\s*([^:：]+?)\s*[:：]\s*(.*)$")
+LIST_ITEM_RE = re.compile(r"^\s{2,}-\s*(.+)$")
 TIME_FMT = "%Y-%m-%d-%H-%M"
 TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$")
+
+MILESTONE_FIELDS = [
+    "id",
+    "title",
+    "prerequisites",
+    "postnodes",
+    "why",
+    "what",
+    "how",
+    "verify",
+    "status",
+    "notes",
+    "updated_at",
+]
+MILESTONE_LIST_FIELDS = {"prerequisites", "postnodes", "why", "what", "how", "verify", "notes"}
+CHANGE_FIELDS = ["version", "date", "reason", "action", "observation", "impacted_files", "notes", "suggestions"]
+CHANGE_LIST_FIELDS = {"reason", "action", "observation", "impacted_files", "notes", "suggestions"}
+
+MILESTONE_TEMPLATE_MD = """## TEMPLATE
+### MS-TYPE-NUM
+- id: MS-TYPE-NUM
+- title: 里程碑标题
+- prerequisites: []
+- postnodes: []
+- why:
+  - 为什么要做1
+  - 为什么要做2
+- what:
+  - 要做什么1
+  - 要做什么2
+- how:
+  - 如何执行1
+  - 如何执行2
+- verify:
+  - 如何验证1
+  - 如何验证2
+- status: unfinished
+- notes:
+  - 补充说明1
+  - 补充说明2
+- updated_at: YYYY-MM-DD-HH-MM"""
+
+CHANGE_TEMPLATE_MD = """## TEMPLATE
+### 0.0.1
+- version: 0.0.1
+- date: YYYY-MM-DD-HH-MM
+- reason:
+  - 变更原因1
+  - 变更原因2
+- action:
+  - 执行动作1
+  - 执行动作2
+- observation:
+  - 结果观察1
+  - 结果观察2
+- impacted_files:
+  - path/to/file1
+  - path/to/file2
+- notes:
+  - 备注1
+- suggestions:
+  - 建议1"""
 
 TREE_NOTE_FORBIDDEN_HINTS = [
     "文件节点",
@@ -40,6 +107,139 @@ TREE_NOTE_FORBIDDEN_HINTS = [
     "只读",
     "可编辑",
 ]
+
+PLACEHOLDER_TOKENS = {
+    "",
+    "-",
+    "--",
+    "...",
+    "……",
+    "tbd",
+    "todo",
+    "xxx",
+    "待补充",
+    "待填写",
+    "待完善",
+    "示例",
+    "样例",
+    "n/a",
+    "na",
+    "none",
+    "null",
+}
+
+BACKGROUND_REQUIRED_FIELDS: dict[str, list[str]] = {
+    "使用边界": ["说明", "非排他声明"],
+    "项目背景": [
+        "项目名称",
+        "项目简介 - 简要介绍这个项目是什么",
+        "核心问题1",
+        "核心原因1",
+        "核心现状1",
+        "核心目标1",
+        "核心边界1",
+        "核心约束1",
+        "核心变化1",
+    ],
+    "技术栈": [
+        "技术栈1名称",
+        "类型 - 该技术在系统中的类别",
+        "简介 - 简要介绍这个技术是什么",
+        "用途1",
+        "选择原因1",
+        "使用说明1",
+    ],
+    "环境信息": [
+        "环境信息1名称",
+        "类型 - 说明该环境属于哪种性质",
+        "简介 - 解释这个环境是什么",
+        "版本 - 说明版本或规格信息",
+        "使用说明1",
+    ],
+    "ICP 理想客户画像 Ideal Customer Profile": [
+        "用户群体 - 描述最适合该产品的客户类型",
+        "痛感来源1",
+        "接触渠道1",
+        "试用意愿1",
+        "使用者1",
+        "决策者1",
+        "付费者1",
+        "推动者1",
+        "反对者1",
+        "购买链路1",
+    ],
+    "替代方案": [
+        "替代方案1名称",
+        "类型 - 说明该环境属于哪种性质",
+        "简介 - 解释这个替代方案是什么",
+        "市场调研 - 目前这个替代方案在市场中的使用和占有率",
+        "核心问题1",
+        "使用场景1",
+        "核心优势1",
+        "核心不足1",
+    ],
+    "差异化": [
+        "差异化1名称",
+        "类型 - 该差异属于哪种差异",
+        "简介 - 该差异的核心说明",
+        "差异来源1",
+        "用户感知度 - 用户是否能直接感知这个差异",
+        "用户驱动力 - 这个差异如何驱动用户切换或持续使用",
+        "复制难度 - 竞品复制该差异的难度评估",
+    ],
+    "可行性": [
+        "可行性事项1名称",
+        "类型 - 该可行性评估属于哪类事项",
+        "简介 - 该事项评估的核心目标",
+        "技术可行性 - 当前技术条件下是否可实现",
+        "数据可得性 - 实施所需数据是否可获取",
+        "实施复杂度 - 实施难度与周期评估",
+        "实施优先级 - 建议实施优先级",
+        "依赖风险1",
+        "合规风险1",
+        "资源需求1",
+        "可信程度 - 当前可行性判断的可信程度以及依据来源",
+    ],
+    "商业性": [
+        "商业性1名称",
+        "意愿用户 - 最愿意尝试并持续使用的用户群体",
+        "付费主体 - 预算决策和付款责任方",
+        "客单价值 - 单客户预期价值区间",
+        "获客成本 - 获取一个有效客户的综合成本",
+        "留存能力 - 用户持续使用与续费能力评估",
+        "商业模式 - 当前拟采用的商业化模式",
+        "可信程度 - 商业性判断的可信程度以及依据来源",
+    ],
+}
+
+RESOURCE_REQUIRED_FIELDS: dict[str, list[str]] = {
+    "使用边界": ["说明", "非排他声明"],
+    "本地资源": [
+        "本地资源1名称",
+        "类型 - 说明该资源所属类别",
+        "简介 - 简要说明该资源是什么",
+        "版本 - 简要说明该资源的版本",
+        "路径1标题",
+        "说明1",
+    ],
+    "外部资源": [
+        "外部资源1名称",
+        "类型 - 说明该资源所属类别",
+        "简介 - 简要说明该资源是什么",
+        "版本 - 简要说明该资源的版本",
+        "URL1标题",
+        "说明1",
+    ],
+    "访问凭据": [
+        "访问凭据1名称",
+        "类型 - 凭据类别",
+        "简介 - 简要说明该凭据用途",
+        "存储位置 - 凭据保存位置",
+        "权限范围 - 凭据可访问范围",
+        "轮换策略 - 凭据更新规则",
+        "责任人 - 凭据维护负责人",
+    ],
+}
 
 IGNORED_HASH_DIRS = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".venv", ".venv-win", ".venv-linux", "venv", "node_modules"}
 IGNORED_HASH_PREFIXES = {
@@ -142,7 +342,145 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     return parsed, body
 
 
-def parse_data_payload(text: str) -> dict[str, Any]:
+def extract_section(text: str, section_name: str) -> str:
+    lines = normalize_text(text).splitlines()
+    start_idx = -1
+    for idx, line in enumerate(lines):
+        match = SECTION_H2_RE.match(line.strip())
+        if match and match.group(1).strip().lower() == section_name.strip().lower():
+            start_idx = idx + 1
+            break
+    if start_idx < 0:
+        return ""
+    end_idx = len(lines)
+    for idx in range(start_idx, len(lines)):
+        if SECTION_H2_RE.match(lines[idx].strip()):
+            end_idx = idx
+            break
+    return "\n".join(lines[start_idx:end_idx]).strip()
+
+
+def normalize_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text or text == "[]":
+        return []
+    return [text]
+
+
+def parse_markdown_records(section_text: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    list_field: str | None = None
+    for raw_line in normalize_text(section_text).splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            continue
+        h3 = SECTION_H3_RE.match(line.strip())
+        if h3:
+            current = {"__title": h3.group(1).strip()}
+            records.append(current)
+            list_field = None
+            continue
+        if current is None:
+            continue
+        item_match = LIST_ITEM_RE.match(line)
+        if item_match and list_field:
+            item = item_match.group(1).strip()
+            if item:
+                existing = current.get(list_field)
+                if not isinstance(existing, list):
+                    existing = []
+                    current[list_field] = existing
+                existing.append(item)
+            continue
+        field_match = FIELD_RE.match(line)
+        if field_match:
+            key = field_match.group(1).strip()
+            value = field_match.group(2).strip()
+            if value == "" or value == "[]":
+                current[key] = []
+                list_field = key if value == "" else None
+            else:
+                current[key] = value
+                list_field = None
+            continue
+    return records
+
+
+def parse_layout_positions(layout_text: str) -> dict[str, dict[str, float]]:
+    if not layout_text.strip():
+        return {}
+    records = parse_markdown_records(layout_text)
+    if not records:
+        if re.search(r"^\s*-\s*positions\s*[:：]\s*\[\s*\]\s*$", layout_text, re.MULTILINE):
+            return {}
+        return {}
+    positions: dict[str, dict[str, float]] = {}
+    for rec in records:
+        node_id = str(rec.get("id") or rec.get("__title") or "").strip()
+        if not node_id:
+            continue
+        try:
+            x = float(str(rec.get("x", "")).strip())
+            y = float(str(rec.get("y", "")).strip())
+        except ValueError:
+            continue
+        positions[node_id] = {"x": x, "y": y}
+    return positions
+
+
+def parse_milestone_markdown_payload(text: str) -> dict[str, Any]:
+    records = parse_markdown_records(extract_section(text, "DATA"))
+    milestones: list[dict[str, Any]] = []
+    for rec in records:
+        node_id = str(rec.get("id") or rec.get("__title") or "").strip()
+        if not node_id:
+            continue
+        milestone = {
+            "id": node_id,
+            "title": str(rec.get("title", "")).strip() or node_id,
+            "prerequisites": normalize_list(rec.get("prerequisites")),
+            "postnodes": normalize_list(rec.get("postnodes")),
+            "why": normalize_list(rec.get("why")),
+            "what": normalize_list(rec.get("what")),
+            "how": normalize_list(rec.get("how")),
+            "verify": normalize_list(rec.get("verify")),
+            "status": str(rec.get("status", "")).strip(),
+            "notes": normalize_list(rec.get("notes")),
+            "updated_at": str(rec.get("updated_at", "")).strip(),
+        }
+        milestones.append(milestone)
+    if not milestones:
+        return {}
+    return {"milestones": milestones, "layout": {"positions": parse_layout_positions(extract_section(text, "LAYOUT"))}}
+
+
+def parse_change_markdown_payload(text: str) -> dict[str, Any]:
+    records = parse_markdown_records(extract_section(text, "DATA"))
+    changes: list[dict[str, Any]] = []
+    for rec in records:
+        version = str(rec.get("version") or rec.get("__title") or "").strip()
+        if not version:
+            continue
+        change = {
+            "version": version,
+            "date": str(rec.get("date", "")).strip(),
+            "reason": normalize_list(rec.get("reason")),
+            "action": normalize_list(rec.get("action")),
+            "observation": normalize_list(rec.get("observation")),
+            "impacted_files": normalize_list(rec.get("impacted_files")),
+            "notes": normalize_list(rec.get("notes")),
+            "suggestions": normalize_list(rec.get("suggestions")),
+        }
+        changes.append(change)
+    if not changes:
+        return {}
+    return {"changes": changes}
+
+
+def parse_json_data_payload(text: str) -> dict[str, Any]:
     match = DATA_BLOCK_RE.search(text)
     if not match:
         raise ValueError("缺少 DATA 代码块")
@@ -156,6 +494,18 @@ def parse_data_payload(text: str) -> dict[str, Any]:
     return payload
 
 
+def parse_data_payload(text: str, doc_name: str) -> dict[str, Any]:
+    if doc_name == "MILESTONE.md":
+        payload = parse_milestone_markdown_payload(text)
+        if payload:
+            return payload
+    if doc_name == "CHANGE.md":
+        payload = parse_change_markdown_payload(text)
+        if payload:
+            return payload
+    return parse_json_data_payload(text)
+
+
 def extract_tree_text(text: str) -> str:
     match = TREE_TEXT_RE.search(text)
     if not match:
@@ -163,28 +513,90 @@ def extract_tree_text(text: str) -> str:
     return normalize_text(match.group(1).strip())
 
 
+def render_list_field(key: str, value: Any) -> list[str]:
+    items = normalize_list(value)
+    if not items:
+        return [f"- {key}: []"]
+    lines = [f"- {key}:"]
+    for item in items:
+        lines.append(f"  - {item}")
+    return lines
+
+
+def render_scalar_field(key: str, value: Any) -> str:
+    return f"- {key}: {str(value or '').strip()}"
+
+
+def render_markdown_records(records: list[dict[str, Any]], fields: list[str], list_fields: set[str], title_field: str) -> str:
+    if not records:
+        return ""
+    lines: list[str] = []
+    for idx, record in enumerate(records):
+        title = str(record.get(title_field) or record.get("__title") or f"ITEM-{idx+1}").strip()
+        lines.append(f"### {title}")
+        for field in fields:
+            value = record.get(field, [] if field in list_fields else "")
+            if field in list_fields:
+                lines.extend(render_list_field(field, value))
+            else:
+                lines.append(render_scalar_field(field, value))
+        lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+def render_layout_positions(payload: dict[str, Any]) -> str:
+    layout = payload.get("layout")
+    if not isinstance(layout, dict):
+        return "- positions: []"
+    raw = layout.get("positions")
+    if not isinstance(raw, dict) or not raw:
+        return "- positions: []"
+    lines: list[str] = []
+    for node_id in sorted(raw.keys()):
+        pos = raw.get(node_id)
+        if not isinstance(pos, dict):
+            continue
+        try:
+            x = float(pos.get("x"))
+            y = float(pos.get("y"))
+        except (TypeError, ValueError):
+            continue
+        lines.append(f"### {node_id}")
+        lines.append(f"- id: {node_id}")
+        lines.append(f"- x: {x}")
+        lines.append(f"- y: {y}")
+        lines.append("")
+    if not lines:
+        return "- positions: []"
+    return "\n".join(lines).rstrip()
+
+
 def render_doc(path_name: str, last_updated: str, payload: dict[str, Any]) -> str:
     if path_name == "MILESTONE.md":
+        milestones = payload.get("milestones")
+        records = milestones if isinstance(milestones, list) else []
         return (
             "---\n"
             f"last_updated: {last_updated}\n"
             "---\n\n"
             "# MILESTONE\n\n"
+            f"{MILESTONE_TEMPLATE_MD}\n\n"
             "## DATA\n"
-            "```yaml\n"
-            f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
-            "```\n"
+            f"{render_markdown_records(records, MILESTONE_FIELDS, MILESTONE_LIST_FIELDS, 'id')}\n\n"
+            "## LAYOUT\n"
+            f"{render_layout_positions(payload)}\n"
         )
     if path_name == "CHANGE.md":
+        changes = payload.get("changes")
+        records = changes if isinstance(changes, list) else []
         return (
             "---\n"
             f"last_updated: {last_updated}\n"
             "---\n\n"
             "# CHANGE\n\n"
+            f"{CHANGE_TEMPLATE_MD}\n\n"
             "## DATA\n"
-            "```yaml\n"
-            f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
-            "```\n"
+            f"{render_markdown_records(records, CHANGE_FIELDS, CHANGE_LIST_FIELDS, 'version')}\n"
         )
     raise ValueError(f"render_doc 不支持文档: {path_name}")
 
@@ -287,12 +699,131 @@ def load_docs(report: Report) -> dict[str, dict[str, Any]]:
         text = read_text(path)
         try:
             frontmatter, body = parse_frontmatter(text)
-            payload = parse_data_payload(text)
+            payload = parse_data_payload(text, rel)
         except ValueError as exc:
             report.add_error(f"{rel}: {exc}")
             continue
         docs[rel] = {"path": path, "text": text, "frontmatter": frontmatter, "body": body, "payload": payload}
     return docs
+
+
+def normalize_value(value: str) -> str:
+    return re.sub(r"\s+", "", str(value).strip()).lower()
+
+
+def is_placeholder_or_empty(value: Any) -> bool:
+    text = str(value or "").strip()
+    normalized = normalize_value(text)
+    if not normalized:
+        return True
+    if normalized in PLACEHOLDER_TOKENS:
+        return True
+    if text.startswith("<") and text.endswith(">"):
+        return True
+    if re.fullmatch(r"[\-._,:;|/\\`'\"*+]+", text):
+        return True
+    return False
+
+
+def extract_section_fields(text: str) -> dict[str, dict[str, str]]:
+    sections: dict[str, dict[str, str]] = {}
+    current_section = ""
+    for raw_line in normalize_text(text).splitlines():
+        line = raw_line.rstrip()
+        section_match = re.match(r"^\s*##\s+(.+?)\s*$", line)
+        if section_match:
+            current_section = section_match.group(1).strip()
+            sections.setdefault(current_section, {})
+            continue
+        field_match = re.match(r"^\s*-\s*([^:：]+?)\s*[:：]\s*(.*)$", line)
+        if field_match and current_section:
+            field = field_match.group(1).strip()
+            value = field_match.group(2).strip()
+            sections[current_section][field] = value
+    return sections
+
+
+def validate_template_fields(
+    doc_name: str,
+    text: str,
+    required: dict[str, list[str]],
+    report: Report,
+    require_non_exclusive_keywords: list[str],
+) -> None:
+    sections = extract_section_fields(text)
+    for section, fields in required.items():
+        if section not in sections:
+            report.add_error(f"{doc_name}[section={section}][field=*]: 缺少必需章节")
+            continue
+        for field_name in fields:
+            if field_name not in sections[section]:
+                report.add_error(f"{doc_name}[section={section}][field={field_name}]: 缺少必填字段")
+                continue
+            value = sections[section][field_name]
+            if is_placeholder_or_empty(value):
+                report.add_error(f"{doc_name}[section={section}][field={field_name}]: 值为空或占位内容")
+
+    non_exclusive_value = sections.get("使用边界", {}).get("非排他声明", "")
+    if not non_exclusive_value:
+        return
+    lower_value = non_exclusive_value.lower()
+    if not all(keyword in lower_value for keyword in require_non_exclusive_keywords):
+        report.add_error(
+            f"{doc_name}[section=使用边界][field=非排他声明]: 必须明确说明“文档不代表全部可用资源”"
+        )
+
+
+def validate_initial_milestone_ready(payload: dict[str, Any], report: Report) -> None:
+    milestones = payload.get("milestones")
+    if not isinstance(milestones, list) or len(milestones) == 0:
+        report.add_error("MILESTONE.md[section=DATA][field=milestones]: 至少需要一个有效初始节点")
+        return
+    first = next((node for node in milestones if isinstance(node, dict)), None)
+    if not isinstance(first, dict):
+        report.add_error("MILESTONE.md[section=DATA][field=milestones]: 初始节点结构无效")
+        return
+
+    scalar_fields = ["id", "title", "status", "updated_at"]
+    for field_name in scalar_fields:
+        if is_placeholder_or_empty(first.get(field_name)):
+            report.add_error(f"MILESTONE.md[section=DATA][field={field_name}]: 初始节点字段未填写")
+
+    list_fields = ["why", "what", "how", "verify"]
+    for field_name in list_fields:
+        value = first.get(field_name)
+        if not isinstance(value, list) or len(value) == 0:
+            report.add_error(f"MILESTONE.md[section=DATA][field={field_name}]: 初始节点字段必须为非空列表")
+            continue
+        if any(is_placeholder_or_empty(item) for item in value):
+            report.add_error(f"MILESTONE.md[section=DATA][field={field_name}]: 初始节点列表存在空值或占位内容")
+
+
+def validate_prestart_readiness(milestone_payload: dict[str, Any], report: Report) -> None:
+    background_path = ROOT / "BACKGROUND.md"
+    resource_path = ROOT / "RESOURCE.md"
+    if not background_path.exists():
+        report.add_error("BACKGROUND.md[section=*][field=*]: 文件缺失，无法通过前置就绪检查")
+    else:
+        validate_template_fields(
+            "BACKGROUND.md",
+            read_text(background_path),
+            BACKGROUND_REQUIRED_FIELDS,
+            report,
+            require_non_exclusive_keywords=["不", "代表"],
+        )
+
+    if not resource_path.exists():
+        report.add_error("RESOURCE.md[section=*][field=*]: 文件缺失，无法通过前置就绪检查")
+    else:
+        validate_template_fields(
+            "RESOURCE.md",
+            read_text(resource_path),
+            RESOURCE_REQUIRED_FIELDS,
+            report,
+            require_non_exclusive_keywords=["不", "代表"],
+        )
+
+    validate_initial_milestone_ready(milestone_payload, report)
 
 
 def update_change_impacted_files(
@@ -390,7 +921,6 @@ def milestone_signature(node: dict[str, Any]) -> dict[str, Any]:
         "what": node.get("what"),
         "how": node.get("how"),
         "verify": node.get("verify"),
-        "ddl": node.get("ddl"),
         "notes": node.get("notes"),
     }
     return keep
@@ -416,7 +946,6 @@ def validate_milestone(
         "what",
         "how",
         "verify",
-        "ddl",
         "status",
         "notes",
         "updated_at",
@@ -451,8 +980,6 @@ def validate_milestone(
             report.add_error(f"{ctx}: title 不能为空")
         if str(node.get("status")) not in MILESTONE_STATUSES:
             report.add_error(f"{ctx}: status 非法 {node.get('status')}")
-        if not ensure_iso_date(str(node.get("ddl", ""))):
-            report.add_error(f"{ctx}: ddl 必须是 YYYY-MM-DD")
         if not ensure_minute_timestamp(str(node.get("updated_at", ""))):
             report.add_error(f"{ctx}: updated_at 必须是 YYYY-MM-DD-HH-MM")
 
@@ -781,6 +1308,8 @@ def run_finalize(output_json: bool) -> int:
     if report.errors:
         print_report(report, output_json)
         return 1
+    if "MILESTONE.md" in docs:
+        validate_prestart_readiness(docs["MILESTONE.md"]["payload"], report)
 
     now_value = now_stamp()
     previous_hashes = {}

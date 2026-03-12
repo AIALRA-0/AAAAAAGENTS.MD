@@ -1,8 +1,9 @@
 {
-  "updated_at": "2026-03-08-23-38",
+  "updated_at": "2026-03-12-08-40",
   "read_only_hashes": {
-    "AGENTS.md": "a8ad874bfe84c85bd2173a6ede6c022531e81e8c39730a27ae5556355620192f",
-    "BACKGROUND.md": "3835e49bfa76ca18542465ab472eb4b49b1c31e8648918201aedeb530f8e6c64",
+    "AGENTS.md": "6a58998d642bc69013d57045c1ae6bf0517e7ae2ba7a4d51446e4b4c8c5945af",
+    "BACKGROUND.md": "af85e0aa20cdeb3e21f0007a19e887a3a1539ba1a31b064ad9e04501fb9f08b9",
+    "RESOURCE.md": "d9e2186fbbf5d7ded668026856634428fb6a044bc0a928b8d719487a6e01130a",
     "agents_standards/PYTHON_STANDARD.md": "c74403e81001fde57f27589dd2f83155d3c26780dd10815d26c1654e9d157223",
     "agents_standards/MARKDOWN_STANDARD.md": "b7f20b1d1a8d4293c21c6923d9cb7fe3cab271cdf3276ac27893fa12439080c8"
   },
@@ -11,6 +12,9 @@
       "last_updated"
     ],
     "BACKGROUND.md": [
+      "last_updated"
+    ],
+    "RESOURCE.md": [
       "last_updated"
     ],
     "agents_standards/PYTHON_STANDARD.md": [
@@ -31,15 +35,15 @@
     "agents_standards/YAML_STANDARD.md"
   ],
   "agents_tools_hashes": {
-    "agents_tools/baseline_refresh.py": "70dbd66f18f44330dee9779e9e20c68d67fa1ec9d9a4ae15e18fffb209d0e650",
+    "agents_tools/baseline_refresh.py": "4ec088de071c39b3175081dd2f0ebf88958d9cd72d3e6561ece8a87a8bca6edd",
     "agents_tools/tree.py": "0310cfdc6bb98424acedf93e7b0d35875c44801ec394616a8d3b0ce5f0e0ae20",
-    "agents_tools/verify_rules.py": "c1ad9ce6126d3e6121f625e2918a1ac4dfc5cc3b91e0184a08e7b892f76b7ea9"
+    "agents_tools/verify_rules.py": "55ac489cbe0aa988c29615813cfe7d06f58506b184dec4d03444081c0b2b94b1"
   },
   "agents_web_hashes": {
-    "agents_web/renderer.py": "816908009bc6ec35ab4cc3ba90159874e863d6f7319bb9079f6db543d8a10b19",
-    "agents_web/server.py": "3f676d08b746d238c50d7ed72639172c963027f416610b5944cec37289943266",
+    "agents_web/renderer.py": "9192f2d7d97c3c058a9ddbe6d3eebf4ce0ca646899bf43bffb0db63bf4156255",
+    "agents_web/server.py": "1986fdd99049f25103ccc6928ea403abcff74d9e6ae9e384e511f914254e2d9b",
     "agents_web/static/app.css": "1c73ef1cf19b627d0bab0a6ef46ecc01824491800a34c3a7e633afa499fc68fe",
-    "agents_web/static/app.js": "1aea937a38653e5884a6146ae8c3e0d74d78b70bdef3c704027e5b3bc6b44bf1",
+    "agents_web/static/app.js": "b74833056aa8a8f2c81edb188fdaa3a8d5a4677f6b5205a1a18bd702c7c08c07",
     "agents_web/templates/index.html": "5498f0195d44798b37cc93b89114f1f033fb26725f78ea684b54aca6fc30b066"
   },
   "milestone_structure": {
@@ -81,7 +85,6 @@
           "可视化页面能够正确加载并展示 MILESTONE、CHANGE、TREE 三类核心文档",
           "TREE 文件中新增节点均包含非空 note 字段，且结构与真实目录保持一致"
         ],
-        "ddl": "2026-03-10",
         "notes": [
           "当前里程碑仅用于完成通用项目初始化阶段",
           "在新增新的里程碑之前，需要确认模板字段与规则校验逻辑保持一致",
@@ -93,7 +96,8 @@
     }
   },
   "file_hashes": {
-    "AGENTS.md": "a8ad874bfe84c85bd2173a6ede6c022531e81e8c39730a27ae5556355620192f",
+    "AGENTS.md": "6a58998d642bc69013d57045c1ae6bf0517e7ae2ba7a4d51446e4b4c8c5945af",
+    "agents_docs/diagrams/how_it_works.mmd": "2cd06edf8a8102b63ee30ac925bf28bb839a4c8d126f2adc2cfee90d3570ddbb",
     "agents_standards/BATCH_STANDARD.md": "0f8ba2b47d4768144c3639ef1169f86696379c088533604df4f485d10d35eec5",
     "agents_standards/HTML_STANDARD.md": "f756cafa5bbe41dbe4162ac0db02030c4e569d7aa6cf56b6598ce93ad74eedee",
     "agents_standards/JSON_STANDARD.md": "8b25532df3db1f3b640bcbe5c0e0e370652ef33634425ec8eee2a1f6c232bbdd",
@@ -102,21 +106,22 @@
     "agents_standards/SHELL_SCRIPT_STANDARD.md": "5aae9096c3e3b8556c22b11acf71cf77489db93c242c16c9de66aca111fdb7d6",
     "agents_standards/TEXT_STANDARD.md": "2722bb26ad007b85fbdafe12949518e16a44df97e5431e7eb912afaa73f590b3",
     "agents_standards/YAML_STANDARD.md": "f6ebee15f80c70d6a66da20a1fda44151be1cc8a525513635da9b80a43667e71",
-    "agents_tools/baseline_refresh.py": "70dbd66f18f44330dee9779e9e20c68d67fa1ec9d9a4ae15e18fffb209d0e650",
+    "agents_tools/baseline_refresh.py": "4ec088de071c39b3175081dd2f0ebf88958d9cd72d3e6561ece8a87a8bca6edd",
     "agents_tools/tree.py": "0310cfdc6bb98424acedf93e7b0d35875c44801ec394616a8d3b0ce5f0e0ae20",
-    "agents_tools/verify_rules.py": "c1ad9ce6126d3e6121f625e2918a1ac4dfc5cc3b91e0184a08e7b892f76b7ea9",
-    "agents_web/renderer.py": "816908009bc6ec35ab4cc3ba90159874e863d6f7319bb9079f6db543d8a10b19",
-    "agents_web/server.py": "3f676d08b746d238c50d7ed72639172c963027f416610b5944cec37289943266",
+    "agents_tools/verify_rules.py": "55ac489cbe0aa988c29615813cfe7d06f58506b184dec4d03444081c0b2b94b1",
+    "agents_web/renderer.py": "9192f2d7d97c3c058a9ddbe6d3eebf4ce0ca646899bf43bffb0db63bf4156255",
+    "agents_web/server.py": "1986fdd99049f25103ccc6928ea403abcff74d9e6ae9e384e511f914254e2d9b",
     "agents_web/static/app.css": "1c73ef1cf19b627d0bab0a6ef46ecc01824491800a34c3a7e633afa499fc68fe",
-    "agents_web/static/app.js": "1aea937a38653e5884a6146ae8c3e0d74d78b70bdef3c704027e5b3bc6b44bf1",
+    "agents_web/static/app.js": "b74833056aa8a8f2c81edb188fdaa3a8d5a4677f6b5205a1a18bd702c7c08c07",
     "agents_web/templates/index.html": "5498f0195d44798b37cc93b89114f1f033fb26725f78ea684b54aca6fc30b066",
-    "BACKGROUND.md": "3835e49bfa76ca18542465ab472eb4b49b1c31e8648918201aedeb530f8e6c64",
-    "CHANGE.md": "1e66ad57f58e6922c2dc266a1eb664c06053ac0082a20a863c0afd92765fee37",
-    "MILESTONE.md": "a14b00d57833c5eceaead290f2e735536bc12adfd19b7f6f4053fddf6b0bdd3b",
+    "BACKGROUND.md": "af85e0aa20cdeb3e21f0007a19e887a3a1539ba1a31b064ad9e04501fb9f08b9",
+    "CHANGE.md": "4fb6c7575b19115c73c586886904fc0a31dc5abeea1c1a94422ed8a0860214ef",
+    "MILESTONE.md": "90d69dd4aab0339b35be14b223e62859c894094a077683aa8ec653874112067b",
     "requirements.txt": "222dc59024b38b431c44ff71b68787e75cc4ca2773c94d6da0223ffe008e29fe",
+    "RESOURCE.md": "d9e2186fbbf5d7ded668026856634428fb6a044bc0a928b8d719487a6e01130a",
     "start_web.bat": "18ae84156a3ee119e62d08b2e7156bc6aaf900a2507ff53e2b2d8330db38ec10",
     "start_web.py": "7edf93941a44dee09fb891377d6dcd557d74c3e5ddb147ab93382c085f649c60",
     "start_web.sh": "df86d61c98a1ffd5eec94a261745f937cc41435c3c5ca5112dab37a4e377c8e9",
-    "TREE.md": "1011e195d8296156e5c697088b7801efd354b1ad89d1d35b2c2a67693e4606ef"
+    "TREE.md": "16624f33ed4390116b5e73ff582f259fffaf66d2cb9cf7b00a1632b05eb425b1"
   }
 }

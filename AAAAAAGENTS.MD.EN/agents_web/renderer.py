@@ -15,7 +15,73 @@ except Exception:  # pragma: no cover
 DOC_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 DATA_BLOCK_RE = re.compile(r"##\s*DATA.*?```(?:yaml|yml|json)\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
 TREE_TEXT_RE = re.compile(r"##\s*TREE_TEXT.*?```text\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
+SECTION_H2_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
+SECTION_H3_RE = re.compile(r"^###\s+(.+?)\s*$")
+FIELD_RE = re.compile(r"^\s*-\s*([^:：]+?)\s*[:：]\s*(.*)$")
+LIST_ITEM_RE = re.compile(r"^\s{2,}-\s*(.+)$")
 TIME_FMT = "%Y-%m-%d-%H-%M"
+
+MILESTONE_FIELDS = [
+    "id",
+    "title",
+    "prerequisites",
+    "postnodes",
+    "why",
+    "what",
+    "how",
+    "verify",
+    "status",
+    "notes",
+    "updated_at",
+]
+MILESTONE_LIST_FIELDS = {"prerequisites", "postnodes", "why", "what", "how", "verify", "notes"}
+CHANGE_FIELDS = ["version", "date", "reason", "action", "observation", "impacted_files", "notes", "suggestions"]
+CHANGE_LIST_FIELDS = {"reason", "action", "observation", "impacted_files", "notes", "suggestions"}
+
+MILESTONE_TEMPLATE_MD = """## TEMPLATE
+### MS-TYPE-NUM
+- id: MS-TYPE-NUM
+- title: Milestone title
+- prerequisites: []
+- postnodes: []
+- why:
+  - Why item 1
+  - Why item 2
+- what:
+  - What item 1
+  - What item 2
+- how:
+  - How item 1
+  - How item 2
+- verify:
+  - Verify item 1
+  - Verify item 2
+- status: unfinished
+- notes:
+  - Notes item 1
+  - Notes item 2
+- updated_at: YYYY-MM-DD-HH-MM"""
+
+CHANGE_TEMPLATE_MD = """## TEMPLATE
+### 0.0.1
+- version: 0.0.1
+- date: YYYY-MM-DD-HH-MM
+- reason:
+  - Reason 1
+  - Reason 2
+- action:
+  - Action 1
+  - Action 2
+- observation:
+  - Observation 1
+  - Observation 2
+- impacted_files:
+  - path/to/file1
+  - path/to/file2
+- notes:
+  - Note 1
+- suggestions:
+  - Suggestion 1"""
 
 
 def normalize_text(text: str) -> str:
@@ -40,7 +106,146 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return result
 
 
-def parse_data_payload(text: str) -> dict[str, Any]:
+def extract_section(text: str, section_name: str) -> str:
+    lines = normalize_text(text).splitlines()
+    start_idx = -1
+    for idx, line in enumerate(lines):
+        match = SECTION_H2_RE.match(line.strip())
+        if match and match.group(1).strip().lower() == section_name.strip().lower():
+            start_idx = idx + 1
+            break
+    if start_idx < 0:
+        return ""
+    end_idx = len(lines)
+    for idx in range(start_idx, len(lines)):
+        if SECTION_H2_RE.match(lines[idx].strip()):
+            end_idx = idx
+            break
+    return "\n".join(lines[start_idx:end_idx]).strip()
+
+
+def normalize_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text or text == "[]":
+        return []
+    return [text]
+
+
+def parse_markdown_records(section_text: str) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    list_field: str | None = None
+    for raw_line in normalize_text(section_text).splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            continue
+        h3 = SECTION_H3_RE.match(line.strip())
+        if h3:
+            current = {"__title": h3.group(1).strip()}
+            records.append(current)
+            list_field = None
+            continue
+        if current is None:
+            continue
+        item_match = LIST_ITEM_RE.match(line)
+        if item_match and list_field:
+            item = item_match.group(1).strip()
+            if item:
+                existing = current.get(list_field)
+                if not isinstance(existing, list):
+                    existing = []
+                    current[list_field] = existing
+                existing.append(item)
+            continue
+        field_match = FIELD_RE.match(line)
+        if field_match:
+            key = field_match.group(1).strip()
+            value = field_match.group(2).strip()
+            if value == "" or value == "[]":
+                current[key] = []
+                list_field = key if value == "" else None
+            else:
+                current[key] = value
+                list_field = None
+            continue
+    return records
+
+
+def parse_layout_positions(layout_text: str) -> dict[str, dict[str, float]]:
+    if not layout_text.strip():
+        return {}
+    records = parse_markdown_records(layout_text)
+    if not records:
+        if re.search(r"^\s*-\s*positions\s*[:：]\s*\[\s*\]\s*$", layout_text, re.MULTILINE):
+            return {}
+        return {}
+    positions: dict[str, dict[str, float]] = {}
+    for rec in records:
+        rec_id = str(rec.get("id") or rec.get("__title") or "").strip()
+        if not rec_id:
+            continue
+        try:
+            x = float(str(rec.get("x", "")).strip())
+            y = float(str(rec.get("y", "")).strip())
+        except ValueError:
+            continue
+        positions[rec_id] = {"x": x, "y": y}
+    return positions
+
+
+def parse_milestone_payload(text: str) -> dict[str, Any]:
+    data_text = extract_section(text, "DATA")
+    records = parse_markdown_records(data_text)
+    milestones: list[dict[str, Any]] = []
+    for rec in records:
+        node_id = str(rec.get("id") or rec.get("__title") or "").strip()
+        if not node_id:
+            continue
+        milestone: dict[str, Any] = {
+            "id": node_id,
+            "title": str(rec.get("title", "")).strip(),
+            "prerequisites": normalize_list(rec.get("prerequisites")),
+            "postnodes": normalize_list(rec.get("postnodes")),
+            "why": normalize_list(rec.get("why")),
+            "what": normalize_list(rec.get("what")),
+            "how": normalize_list(rec.get("how")),
+            "verify": normalize_list(rec.get("verify")),
+            "status": str(rec.get("status", "")).strip(),
+            "notes": normalize_list(rec.get("notes")),
+            "updated_at": str(rec.get("updated_at", "")).strip(),
+        }
+        if not milestone["title"]:
+            milestone["title"] = node_id
+        milestones.append(milestone)
+    layout_text = extract_section(text, "LAYOUT")
+    return {"milestones": milestones, "layout": {"positions": parse_layout_positions(layout_text)}}
+
+
+def parse_change_payload(text: str) -> dict[str, Any]:
+    data_text = extract_section(text, "DATA")
+    records = parse_markdown_records(data_text)
+    changes: list[dict[str, Any]] = []
+    for rec in records:
+        version = str(rec.get("version") or rec.get("__title") or "").strip()
+        if not version:
+            continue
+        change: dict[str, Any] = {
+            "version": version,
+            "date": str(rec.get("date", "")).strip(),
+            "reason": normalize_list(rec.get("reason")),
+            "action": normalize_list(rec.get("action")),
+            "observation": normalize_list(rec.get("observation")),
+            "impacted_files": normalize_list(rec.get("impacted_files")),
+            "notes": normalize_list(rec.get("notes")),
+            "suggestions": normalize_list(rec.get("suggestions")),
+        }
+        changes.append(change)
+    return {"changes": changes}
+
+
+def parse_json_data_payload(text: str) -> dict[str, Any]:
     match = DATA_BLOCK_RE.search(text)
     if not match:
         return {}
@@ -52,6 +257,18 @@ def parse_data_payload(text: str) -> dict[str, Any]:
     if isinstance(payload, dict):
         return payload
     return {}
+
+
+def parse_data_payload(text: str, doc_name: str) -> dict[str, Any]:
+    if doc_name == "MILESTONE.md":
+        payload = parse_milestone_payload(text)
+        if payload.get("milestones"):
+            return payload
+    if doc_name == "CHANGE.md":
+        payload = parse_change_payload(text)
+        if payload.get("changes"):
+            return payload
+    return parse_json_data_payload(text)
 
 
 def parse_tree_text(text: str) -> str:
@@ -347,6 +564,64 @@ def build_tree_text_from_payload(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_list_field(key: str, value: Any) -> list[str]:
+    items = normalize_list(value)
+    if not items:
+        return [f"- {key}: []"]
+    lines = [f"- {key}:"]
+    for item in items:
+        lines.append(f"  - {item}")
+    return lines
+
+
+def render_scalar_field(key: str, value: Any) -> str:
+    return f"- {key}: {str(value or '').strip()}"
+
+
+def render_markdown_records(records: list[dict[str, Any]], fields: list[str], list_fields: set[str], title_field: str) -> str:
+    if not records:
+        return ""
+    lines: list[str] = []
+    for idx, record in enumerate(records):
+        title = str(record.get(title_field) or record.get("__title") or f"ITEM-{idx+1}").strip()
+        lines.append(f"### {title}")
+        for field_name in fields:
+            value = record.get(field_name, [] if field_name in list_fields else "")
+            if field_name in list_fields:
+                lines.extend(render_list_field(field_name, value))
+            else:
+                lines.append(render_scalar_field(field_name, value))
+        lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+def render_layout_positions(payload: dict[str, Any]) -> str:
+    layout = payload.get("layout")
+    if not isinstance(layout, dict):
+        return "- positions: []"
+    raw = layout.get("positions")
+    if not isinstance(raw, dict) or not raw:
+        return "- positions: []"
+    lines: list[str] = []
+    for node_id in sorted(raw.keys()):
+        pos = raw.get(node_id)
+        if not isinstance(pos, dict):
+            continue
+        try:
+            x = float(pos.get("x"))
+            y = float(pos.get("y"))
+        except (TypeError, ValueError):
+            continue
+        lines.append(f"### {node_id}")
+        lines.append(f"- id: {node_id}")
+        lines.append(f"- x: {x}")
+        lines.append(f"- y: {y}")
+        lines.append("")
+    if not lines:
+        return "- positions: []"
+    return "\n".join(lines).rstrip()
+
+
 def build_graph(name: str, payload: dict[str, Any]) -> dict[str, Any]:
     if name == "MILESTONE.md":
         return build_milestone_graph(payload)
@@ -376,23 +651,45 @@ def serialize_document(name: str, frontmatter: dict[str, str], payload: dict[str
             f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
             "```\n"
         )
-    title = "MILESTONE" if name == "MILESTONE.md" else "CHANGE" if name == "CHANGE.md" else name
+    if name == "MILESTONE.md":
+        milestones = payload.get("milestones")
+        records = milestones if isinstance(milestones, list) else []
+        return (
+            "---\n"
+            f"last_updated: {last_updated}\n"
+            "---\n\n"
+            "# MILESTONE\n\n"
+            f"{MILESTONE_TEMPLATE_MD}\n\n"
+            "## DATA\n"
+            f"{render_markdown_records(records, MILESTONE_FIELDS, MILESTONE_LIST_FIELDS, 'id')}\n\n"
+            "## LAYOUT\n"
+            f"{render_layout_positions(payload)}\n"
+        )
+    if name == "CHANGE.md":
+        changes = payload.get("changes")
+        records = changes if isinstance(changes, list) else []
+        return (
+            "---\n"
+            f"last_updated: {last_updated}\n"
+            "---\n\n"
+            "# CHANGE\n\n"
+            f"{CHANGE_TEMPLATE_MD}\n\n"
+            "## DATA\n"
+            f"{render_markdown_records(records, CHANGE_FIELDS, CHANGE_LIST_FIELDS, 'version')}\n"
+        )
+    title = name
     return (
         "---\n"
         f"last_updated: {last_updated}\n"
         "---\n\n"
         f"# {title}\n\n"
-        "## DATA\n"
-        "```yaml\n"
-        f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
-        "```\n"
     )
 
 
 def load_document(path: Path) -> dict[str, Any]:
     raw = normalize_text(path.read_text(encoding="utf-8"))
     frontmatter = parse_frontmatter(raw)
-    payload = parse_data_payload(raw)
+    payload = parse_data_payload(raw, path.name)
     tree_text = parse_tree_text(raw) if path.name == "TREE.md" else ""
     html_source = strip_frontmatter(raw)
     html_value = markdown_to_html(html_source)

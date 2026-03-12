@@ -39,7 +39,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 BACKUP_DIR = ROOT / "agents_artifacts" / "outputs" / "web_backups"
 STANDARDS_DIR = ROOT / "agents_standards"
 
-BASE_DOCS = ["AGENTS.md", "BACKGROUND.md", "MILESTONE.md", "CHANGE.md", "TREE.md"]
+BASE_DOCS = ["AGENTS.md", "BACKGROUND.md", "RESOURCE.md", "MILESTONE.md", "CHANGE.md", "TREE.md"]
 MODEL_EDITABLE_DOCS = {"MILESTONE.md", "CHANGE.md", "TREE.md"}
 GRAPH_DOCS = {"MILESTONE.md", "CHANGE.md"}
 TIME_FMT = "%Y-%m-%d-%H-%M"
@@ -356,7 +356,7 @@ def update_node(name: str, node_id: str, fields: dict[str, Any]) -> dict[str, An
         raise HTTPException(status_code=404, detail=f"未找到节点: {node_id}")
 
     if name == "MILESTONE.md":
-        allowed = {"title", "prerequisites", "postnodes", "why", "what", "how", "verify", "ddl", "status", "notes"}
+        allowed = {"title", "prerequisites", "postnodes", "why", "what", "how", "verify", "status", "notes"}
     elif name == "CHANGE.md":
         allowed = {"date", "reason", "action", "observation", "notes", "suggestions"}
     elif name == "TREE.md":
@@ -393,7 +393,6 @@ def create_milestone_node(payload: dict[str, Any], node_id: str, title: str) -> 
         "what": ["待补充"],
         "how": ["待补充"],
         "verify": ["待补充"],
-        "ddl": today_date(),
         "status": "unfinished",
         "notes": ["待补充"],
         "updated_at": now_stamp(),

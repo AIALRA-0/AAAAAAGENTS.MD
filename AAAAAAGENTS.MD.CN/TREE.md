@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-03-08-23-38
+last_updated: 2026-03-12-08-40
 ---
 
 # TREE
@@ -14,6 +14,9 @@ last_updated: 2026-03-08-23-38
 │       ├── baseline.json
 │       ├── finalize_state.json
 │       └── rules_snapshot.json
+├── agents_docs
+│   └── diagrams
+│       └── how_it_works.mmd
 ├── agents_standards
 │   ├── BATCH_STANDARD.md
 │   ├── HTML_STANDARD.md
@@ -40,6 +43,7 @@ last_updated: 2026-03-08-23-38
 ├── CHANGE.md
 ├── MILESTONE.md
 ├── requirements.txt
+├── RESOURCE.md
 ├── start_web.bat
 ├── start_web.py
 ├── start_web.sh
@@ -56,7 +60,7 @@ last_updated: 2026-03-08-23-38
       "parent": "",
       "type": "dir",
       "status": "active",
-      "last_modified": "2026-03-08-22-48",
+      "last_modified": "2026-03-12-07-41",
       "editable": false,
       "note": "项目根目录，集中管理规则文档、自动化脚本与可视化模块"
     },
@@ -69,6 +73,16 @@ last_updated: 2026-03-08-23-38
       "last_modified": "2026-03-08-04-37",
       "editable": false,
       "note": "运行产物根目录，存放日志、备注与输出快照"
+    },
+    {
+      "path": "agents_docs",
+      "name": "agents_docs",
+      "parent": ".",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-11-08-32",
+      "editable": false,
+      "note": ""
     },
     {
       "path": "agents_standards",
@@ -106,7 +120,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-20-19",
+      "last_modified": "2026-03-12-07-11",
       "editable": false,
       "note": "项目总控约束文件，定义 Agent 工作流程与边界"
     },
@@ -116,7 +130,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-15-50",
+      "last_modified": "2026-03-12-07-47",
       "editable": false,
       "note": "项目背景与资源信息模板，由用户维护"
     },
@@ -126,7 +140,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-07-50",
       "editable": true,
       "note": "结构化变更日志文件"
     },
@@ -136,7 +150,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-37",
+      "last_modified": "2026-03-12-08-37",
       "editable": true,
       "note": "里程碑规划与节点状态记录文件"
     },
@@ -149,6 +163,16 @@ last_updated: 2026-03-08-23-38
       "last_modified": "2026-03-08-05-11",
       "editable": false,
       "note": "Python 依赖清单文件"
+    },
+    {
+      "path": "RESOURCE.md",
+      "name": "RESOURCE.md",
+      "parent": ".",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-12-07-11",
+      "editable": false,
+      "note": ""
     },
     {
       "path": "start_web.bat",
@@ -186,7 +210,7 @@ last_updated: 2026-03-08-23-38
       "parent": ".",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-07-53",
       "editable": true,
       "note": "项目文件树与节点作用说明文件"
     },
@@ -236,7 +260,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_artifacts/outputs",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-08-40",
       "editable": false,
       "note": "用户基线文件，记录边界哈希与结构锁定信息"
     },
@@ -246,7 +270,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_artifacts/outputs",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-23-38",
+      "last_modified": "2026-03-12-08-40",
       "editable": false,
       "note": "收尾状态文件，记录上次任务对比基线"
     },
@@ -259,6 +283,26 @@ last_updated: 2026-03-08-23-38
       "last_modified": "2026-03-08-05-12",
       "editable": false,
       "note": "历史规则快照文件，用于兼容旧流程"
+    },
+    {
+      "path": "agents_docs/diagrams",
+      "name": "diagrams",
+      "parent": "agents_docs",
+      "type": "dir",
+      "status": "active",
+      "last_modified": "2026-03-09-00-16",
+      "editable": false,
+      "note": ""
+    },
+    {
+      "path": "agents_docs/diagrams/how_it_works.mmd",
+      "name": "how_it_works.mmd",
+      "parent": "agents_docs/diagrams",
+      "type": "file",
+      "status": "active",
+      "last_modified": "2026-03-09-00-17",
+      "editable": false,
+      "note": ""
     },
     {
       "path": "agents_standards/BATCH_STANDARD.md",
@@ -346,7 +390,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_tools",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-31",
+      "last_modified": "2026-03-12-08-38",
       "editable": false,
       "note": "用户基线刷新脚本，重建结构与哈希基线"
     },
@@ -366,7 +410,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_tools",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-21-46",
+      "last_modified": "2026-03-12-08-38",
       "editable": false,
       "note": "唯一 finalize 校验脚本，执行全量规则检查"
     },
@@ -396,7 +440,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-22",
+      "last_modified": "2026-03-12-08-39",
       "editable": false,
       "note": "文档解析与流程图渲染逻辑"
     },
@@ -406,7 +450,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-28",
+      "last_modified": "2026-03-12-08-39",
       "editable": false,
       "note": "Web 服务入口与 API 路由实现"
     },
@@ -426,7 +470,7 @@ last_updated: 2026-03-08-23-38
       "parent": "agents_web/static",
       "type": "file",
       "status": "active",
-      "last_modified": "2026-03-08-22-26",
+      "last_modified": "2026-03-12-08-39",
       "editable": false,
       "note": "工作台前端脚本文件，处理交互、渲染与接口调用"
     },

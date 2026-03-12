@@ -480,7 +480,6 @@
         html += kvBlock("what", raw.what);
         html += kvBlock("how", raw.how);
         html += kvBlock("verify", raw.verify);
-        html += kvBlock("ddl", raw.ddl);
         html += kvBlock("notes", raw.notes);
         html += kvBlock("updated_at", raw.updated_at);
       } else if (state.currentDoc === CHANGE_DOC) {
@@ -786,7 +785,7 @@
     }
 
     function editableFieldsByDoc(name) {
-      if (name === MILESTONE_DOC) return ["title", "prerequisites", "postnodes", "why", "what", "how", "verify", "ddl", "status", "notes"];
+      if (name === MILESTONE_DOC) return ["title", "prerequisites", "postnodes", "why", "what", "how", "verify", "status", "notes"];
       if (name === CHANGE_DOC) return ["date", "reason", "action", "observation", "notes", "suggestions"];
       if (name === TREE_DOC) return ["note"];
       return [];
@@ -843,13 +842,12 @@
             select.appendChild(option);
           }
           wrap.appendChild(select);
-        } else if (field === "ddl" || field === "date") {
+        } else if (field === "date") {
           const input = document.createElement("input");
           input.className = "form-control form-control-sm";
           input.type = "text";
           input.name = field;
           if (field === "date") input.placeholder = "YYYY-MM-DD-HH-MM";
-          if (field === "ddl") input.placeholder = "YYYY-MM-DD";
           input.value = fieldText(node[field]);
           wrap.appendChild(input);
         } else if (Array.isArray(node[field])) {

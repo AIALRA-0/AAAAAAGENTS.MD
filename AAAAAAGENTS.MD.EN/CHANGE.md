@@ -1,54 +1,62 @@
 ---
-last_updated: 2026-03-08-23-38
+last_updated: 2026-03-12-08-40
 ---
 
 # CHANGE
 
+## TEMPLATE
+### 0.0.1
+- version: 0.0.1
+- date: YYYY-MM-DD-HH-MM
+- reason:
+  - Reason 1
+  - Reason 2
+- action:
+  - Action 1
+  - Action 2
+- observation:
+  - Observation 1
+  - Observation 2
+- impacted_files:
+  - path/to/file1
+  - path/to/file2
+- notes:
+  - Note 1
+- suggestions:
+  - Suggestion 1
+
 ## DATA
-```yaml
-{
-  "changes": [
-    {
-      "version": "0.0.1",
-      "date": "2026-03-08-23-21",
-      "reason": [
-        "Initialize the general AGENTS project skeleton and establish basic automated execution capabilities",
-        "Establish a unified rule entrance to reduce ambiguities in rule understanding that may arise when multiple people collaborate",
-        "Precipitate a set of reusable project templates to reduce the initialization cost of new projects in the future",
-        "Replacing verbal agreements with scripted processes makes the execution process more stable and consistent",
-        "Provide a stable starting point for subsequent milestone expansion and visual governance system"
-      ],
-      "action": [
-        "Create core constraint document templates, including AGENTS, BACKGROUND, MILESTONE, CHANGE, TREE",
-        "Write basic rule verification scripts to check document structure and field integrity",
-        "Build an initial version of a local visual workbench to support core document reading, editing and preview",
-        "Establish a script execution link for TREE automatic synchronization, baseline refresh and final verification",
-        "The unified timestamp format is YYYY-MM-DD-HH-MM, and aligns all document field structures"
-      ],
-      "observation": [
-        "The project already has the basic capabilities of rule governance, automatic verification and closed-loop execution",
-        "The final inspection process can output clear error messages, making it easy to quickly locate and repair problems",
-        "The file tree structure and structured data can be updated simultaneously",
-        "The visual page can already support browsing and editing operations in the initialization phase",
-        "New milestones in the future can be directly expanded on the current template"
-      ],
-      "impacted_files": [
-        "TREE.md"
-      ],
-      "notes": [
-        "The current version only records core changes during the initialization phase of the project",
-        "This record is used to precipitate a baseline template that can be reused when starting future projects",
-        "Subsequent new records need to increment the version number and add content on this basis",
-        "If the user manually modifies the read-only rule file, it is recommended to execute baseline_refresh to update the baseline first",
-        "This record is retained as a reference sample during the initialization phase"
-      ],
-      "suggestions": [
-        "It is recommended to add automated regression scripts for front-end interactions to continuously verify the stability of page functions",
-        "It is recommended to add a hierarchical prompt mechanism for rule conflicts and provide an automatic repair wizard",
-        "It is recommended to split multi-level milestone views in large projects to improve governance clarity",
-        "It is recommended to gradually change key dependencies to local static resources to support offline operating environments"
-      ]
-    }
-  ]
-}
-```
+### 0.0.1
+- version: 0.0.1
+- date: 2026-03-08-23-21
+- reason:
+  - Initialize the common AGENTS project skeleton and establish baseline automated execution capability
+  - Build a unified rule entrypoint to reduce rule interpretation ambiguity in collaboration
+  - Create a reusable project template to reduce initialization cost for future projects
+  - Replace verbal process agreements with scripted workflows for stable execution consistency
+  - Provide a stable starting point for later milestone expansion and visual governance
+- action:
+  - Created core constraint document templates: AGENTS, BACKGROUND, MILESTONE, CHANGE, TREE
+  - Implemented baseline rule validation scripts for structure and field completeness checks
+  - Built initial local dashboard with document read/edit/preview capabilities
+  - Established script execution chain for TREE sync, baseline refresh, and final validation
+  - Unified timestamp format to YYYY-MM-DD-HH-MM and aligned document field structures
+- observation:
+  - The project now has baseline capabilities for rule governance, automated validation, and closed-loop execution
+  - Final validation outputs clear errors for quick diagnosis and repair
+  - File tree and structured data now stay synchronized
+  - The dashboard supports initialization-stage browsing and editing operations
+  - Future milestones can be directly extended from the current template
+- impacted_files:
+  - TREE.md
+- notes:
+  - This version only records core changes from the project initialization stage
+  - This record is retained as a reusable baseline template for future project bootstrap
+  - Subsequent records must increment version and append content on this basis
+  - If users manually change read-only rule files, baseline_refresh should be run first
+  - This record is kept as the reference sample for initialization stage
+- suggestions:
+  - Add automated frontend regression scripts to continuously validate interaction stability
+  - Add rule-conflict severity levels and auto-repair guidance
+  - Add multi-level milestone views for large projects to improve governance clarity
+  - Gradually localize key dependencies as static resources for offline support
