@@ -1,93 +1,53 @@
-# AAAAAAGENTS.MD
+<div align="center">
 
-- [English](#english)
-- [中文](#中文)
+<h1>AAAAAAGENTS.MD</h1>
 
-## English
+<p><strong>把项目约束、里程碑、变更、目录和验证收进一套可执行、可追溯的协作工作区</strong></p>
 
-### Introduction
+<p>
+  <img src="docs/images/badges/scope.svg" alt="项目治理范围">
+  <img src="docs/images/badges/mode.svg" alt="执行模式">
+  <img src="docs/images/badges/language.svg" alt="中英文文档">
+  <img src="docs/images/badges/visual.svg" alt="本地可视化">
 
-`AAAAAAGENTS.MD` is a rule-driven project governance workspace for AI-assisted development.  
-It combines:
+</p>
 
-- constraint documents (`AGENTS.md`, `MILESTONE.md`, `CHANGE.md`, `TREE.md`)
-- deterministic automation scripts (`agents_tools`)
-- local visualization dashboard (`agents_web`)
+<p>
+  <a href="#project-snapshot">项目概览</a> ·
+  <a href="AAAAAAGENTS.MD.CN/AGENTS.md">中文工作区</a> ·
+  <a href="AAAAAAGENTS.MD.EN/AGENTS.md">英文工作区</a> ·
+  <a href="CONTRIBUTING.md">贡献指南</a> ·
+  <a href="LICENSE">许可证</a>
+</p>
 
-English workspace path: `./AAAAAAGENTS.MD.EN`
+<p><a href="README.md">简体中文</a> · <a href="README.en.md">English</a></p>
 
-### Why It Exists
+</div>
 
-- Keep agent execution bounded, traceable, and auditable
-- Convert verbal collaboration rules into executable checks
-- Standardize milestone progress and change logging
-- Reduce project bootstrap and handover friction
-- Improve project cognition granularity so both AI and human users can read, understand, and collaborate on the same structure
+<a id="project-snapshot"></a>
 
-### How It Works
+## 1 项目概览
 
-```mermaid
-flowchart TD
-    A[User Request] --> B[Load Constraints and Context]
-    B --> C[Implement Task]
-    C --> D[Update MILESTONE / CHANGE / TREE]
-    D --> E[Run tree sync]
-    E --> F[Run finalize verification]
-    F --> G{Pass?}
-    G -- Yes --> H[Complete and Report]
-    G -- No --> I[Fix and Iterate]
-    I --> F
-    B -. Optional .-> J[Baseline Refresh for User-driven Structural Changes]
-    C -. Optional .-> K[Web Dashboard Review]
-```
+本节把原有双语长文档拆成中文主文档和英文镜像，原有功能、流程、命令、截图槽位和采用边界继续保留
 
-### Prompt Templates
+<div align="center">
 
-#### Initialization Prompt
+表 1.1 项目公开概览
 
-```markdown
-Read `AGENTS.md` first, then build the initial global understanding from `BACKGROUND.md`, `TREE.md`, and existing project files. Follow the workflow and recording contracts defined in `AGENTS.md`, execute only within authorized scope, and treat all project standards, milestone rules, and validation rules as the single source of execution truth.
-```
+| 项目 | 当前内容 |
+|---|---|
+| 中文工作区 | `AAAAAAGENTS.MD.CN` |
+| 英文工作区 | `AAAAAAGENTS.MD.EN` |
+| 治理核心 | `AGENTS.md`、`MILESTONE.md`、`CHANGE.md` 和 `TREE.md` |
+| 自动化 | 目录同步、基线刷新和最终校验 |
+| 可视化 | 仓库内本地工作台，不依赖公开部署地址 |
+| 许可证 | 见 [`LICENSE`](LICENSE) |
 
-#### Daily Prompt
+</div>
 
-```markdown
-Locate the `MILESTONE` node required by this task, execute strictly by `AGENTS.md` workflow, and complete update-record-verify closure in one run. Do not rely on detailed user prompt decomposition; instead, implement based on the structured rules and records defined in project documents.
-```
+## 2 项目介绍
 
-### Quick Start
-
-```bash
-# English workspace
-cd AAAAAAGENTS.MD.EN
-
-# start local web dashboard
-python ./start_web.py
-# or
-./start_web.sh
-# or (Windows)
-./start_web.bat
-
-# maintenance commands
-python agents_tools/tree.py sync
-python agents_tools/baseline_refresh.py
-python agents_tools/verify_rules.py finalize --json
-```
-
-### Screenshots
-
-Expected screenshot slots (English):
-
-- `01-overview.png`
-- `02-milestone-flow.png`
-- `03-tree-explorer.png`
-- `04-edit-mode.png`
-
-## 中文
-
-### 项目介绍
-
-`AAAAAAGENTS.MD` 是一套面向 AI 协作开发的规则化治理工程。  
+`AAAAAAGENTS.MD` 是一套面向 AI 协作开发的规则化治理工程
 它由三部分组成：
 
 - 约束文档体系（`AGENTS.md`、`MILESTONE.md`、`CHANGE.md`、`TREE.md`）
@@ -96,7 +56,7 @@ Expected screenshot slots (English):
 
 中文工作区路径：`./AAAAAAGENTS.MD.CN`
 
-### 为什么存在
+## 3 治理目标
 
 - 让 Agent 执行过程有边界、可追踪、可审计
 - 把口头协作规则转成可执行校验
@@ -104,9 +64,12 @@ Expected screenshot slots (English):
 - 降低新项目初始化与交接成本
 - 提升项目结构化认知颗粒度，做到 AI 可读、用户可读、协作过程可审计
 
-### 如何工作
+## 4 运行方式
+
+<div align="center">
 
 ```mermaid
+%% 展示规则文档怎样驱动执行、记录和校验
 flowchart TD
     A[用户提出任务] --> B[读取约束与上下文]
     B --> C[执行实现]
@@ -121,44 +84,54 @@ flowchart TD
     C -. 可选 .-> K[通过 Web 工作台可视化检查]
 ```
 
-### 提示词模板
+图 4.1 规则文档、执行模式和校验闭环
 
-#### 初始化提示词
+</div>
+
+## 5 提示词模板
+
+### 5.1 初始化提示词
 
 ```markdown
+# 将以下内容作为一段完整提示词使用
+# 以下内容继续说明本段任务要求
 先读取 `AGENTS.md`，再结合 `BACKGROUND.md`、`TREE.md` 与项目现有文件建立初始全局认知
 
+# 以下内容继续说明本段任务要求
 后续执行以 `AGENTS.md` 规定的工作流、记录格式、范围边界和校验规则为唯一标准来源
 ```
 
-#### 日常提示词
+### 5.2 日常提示词
 
 ```markdown
+# 将以下内容作为一段完整提示词使用
+# 以下内容继续说明本段任务要求
 请先定位本次任务对应的 `MILESTONE` 节点，再按 `AGENTS.md` 的标准工作流执行并完成更新记录与终检闭环
 
-用户不需要在 prompt 里展开细节，任务细则统一以 `AGENTS.md` 及相关约束文档为准。
+# 以下内容继续说明本段任务要求
+用户不需要在 prompt 里展开细节，任务细则统一以 `AGENTS.md` 及相关约束文档为准
 ```
 
-### 快速启用
+## 6 快速启用
 
 ```bash
 # 中文工作区
-cd AAAAAAGENTS.MD.CN
+cd AAAAAAGENTS.MD.CN # 执行本小节对应操作
 
 # 启动本地可视化服务
-python ./start_web.py
+python ./start_web.py # 执行本小节对应操作
 # 或
-./start_web.sh
+./start_web.sh # 执行本小节对应操作
 # 或（Windows）
-./start_web.bat
+./start_web.bat # 执行本小节对应操作
 
 # 常用维护命令
-python agents_tools/tree.py sync
-python agents_tools/baseline_refresh.py
-python agents_tools/verify_rules.py finalize --json
+python agents_tools/tree.py sync # 执行本小节对应操作
+python agents_tools/baseline_refresh.py # 执行本小节对应操作
+python agents_tools/verify_rules.py finalize --json # 执行本小节对应操作
 ```
 
-### 屏幕截图
+## 7 屏幕截图
 
 标准截图槽位（中文）：
 
